@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1009954961371",
+    "project_id": "snapstudy-6fbd2",
+    "storage_bucket": "snapstudy-6fbd2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1009954961371:android:3f19081766c7403c7599fe",
+        "android_client_info": {
+          "package_name": "com.snapstudy.snapstudy"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1009954961371-udvvgkhf5efbv9tsuk8od05980m48gjr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.snapstudy.snapstudy",
+            "certificate_hash": "f1eefe1d049754e689c76b96989f7ed0d76468f0"
+          }
+        },
+        {
+          "client_id": "1009954961371-us6gbtifg137r7s3ts9pf1rvlbksq3ob.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdfBKgfahl06YnYdLN4hDL48Hbpj58xXg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1009954961371-us6gbtifg137r7s3ts9pf1rvlbksq3ob.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

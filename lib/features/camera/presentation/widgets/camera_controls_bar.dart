@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:snapstudy/core/theme/app_colors.dart';
+import 'package:snapstudy/core/widgets/app_button.dart';
 
 /// Bottom controls: gallery, shutter, flash, done.
 class CameraControlsBar extends StatelessWidget {
@@ -23,8 +25,18 @@ class CameraControlsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            Colors.black.withValues(alpha: 0.75),
+          ],
+        ),
+      ),
       child: Row(
         children: [
           _SideButton(
@@ -44,7 +56,17 @@ class CameraControlsBar extends StatelessWidget {
                     height: 76,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 4),
+                      border: Border.all(
+                        color: AppColors.secondary,
+                        width: 4,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.secondary.withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
                     padding: const EdgeInsets.all(4),
                     child: Container(
@@ -66,14 +88,10 @@ class CameraControlsBar extends StatelessWidget {
           ),
           if (captureCount > 0) ...[
             const SizedBox(width: 8),
-            FilledButton(
+            AppButton(
+              label: 'Xong ($captureCount)',
+              variant: AppButtonVariant.gold,
               onPressed: onDone,
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-              child: Text('Xong ($captureCount)'),
             ),
           ],
         ],
@@ -104,9 +122,12 @@ class _SideButton extends StatelessWidget {
         children: [
           IconButton(
             onPressed: onPressed,
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white.withValues(alpha: 0.12),
+            ),
             icon: Icon(
               icon,
-              color: highlighted ? Colors.amber : Colors.white,
+              color: highlighted ? AppColors.secondary : Colors.white,
             ),
           ),
           Text(

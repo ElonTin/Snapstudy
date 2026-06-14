@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/theme/app_colors.dart';
+import 'package:snapstudy/core/widgets/app_scaffold.dart';
 import 'package:snapstudy/features/home/domain/entities/study_progress.dart';
 
 class ProgressStatsRow extends StatelessWidget {
@@ -65,17 +65,19 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return Container(
+    return AppCard(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: color),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
           const SizedBox(height: 10),
           RichText(
             text: TextSpan(

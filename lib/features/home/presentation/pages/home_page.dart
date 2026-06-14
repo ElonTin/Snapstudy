@@ -4,15 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:snapstudy/core/routing/route_paths.dart';
 import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/theme/theme_mode_provider.dart';
-import 'package:snapstudy/core/utils/extensions.dart';
 import 'package:snapstudy/core/widgets/app_error_view.dart';
 import 'package:snapstudy/core/widgets/app_loading.dart';
 import 'package:snapstudy/core/widgets/cached_network_avatar.dart';
 import 'package:snapstudy/features/auth/presentation/providers/auth_providers.dart';
 import 'package:snapstudy/features/home/domain/entities/study_progress.dart';
 import 'package:snapstudy/features/home/presentation/providers/dashboard_provider.dart';
-import 'package:snapstudy/features/camera/presentation/utils/camera_navigation.dart';
-import 'package:snapstudy/features/sessions/presentation/providers/session_providers.dart';
+import 'package:snapstudy/features/home/presentation/utils/home_ingest_flow.dart';
 import 'package:snapstudy/features/sessions/presentation/widgets/active_session_banner.dart';
 import 'package:snapstudy/features/home/presentation/widgets/ai_activity_section.dart';
 import 'package:snapstudy/features/home/presentation/widgets/dashboard_fade_in.dart';
@@ -23,6 +21,7 @@ import 'package:snapstudy/features/home/presentation/widgets/recent_sessions_sec
 import 'package:snapstudy/features/home/presentation/widgets/review_reminder_banner.dart';
 import 'package:snapstudy/features/home/presentation/widgets/subject_cards_section.dart';
 import 'package:snapstudy/features/home/presentation/widgets/upcoming_reviews_section.dart';
+import 'package:snapstudy/features/home/presentation/widgets/weak_areas_home_section.dart';
 import 'package:snapstudy/features/notifications/presentation/providers/notification_providers.dart';
 
 /// Student dashboard — Phase 3.
@@ -34,7 +33,6 @@ class HomePage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: const SafeArea(child: _HomeDashboardBody()),
-      floatingActionButton: const _HomeCaptureFab(),
     );
   }
 }
@@ -50,6 +48,7 @@ class _HomeDashboardBody extends ConsumerWidget {
     return dashboard.when(
       loading: () => const AppLoading(
         fullScreen: true,
+        useSkeleton: true,
         message: 'Đang tải bảng điều khiển...',
       ),
       error: (e, _) => AppErrorView(
@@ -110,6 +109,10 @@ class _HomeDashboardBody extends ConsumerWidget {
                         ),
                         const SizedBox(height: 28),
                         DashboardFadeIn(
+                          delay: const Duration(milliseconds: 225),
+                          child: const WeakAreasHomeSection(),
+                        ),
+                        DashboardFadeIn(
                           delay: const Duration(milliseconds: 250),
                           child: AiActivitySection(
                             activities: data.aiActivities,
@@ -157,49 +160,9 @@ class _HomeQuickCapture extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return QuickCaptureCard(onCapture: () => _openCapture(context, ref));
-  }
-}
-
-Future<void> _openCapture(BuildContext context, WidgetRef ref) async {
-  final hasActive = ref.read(hasActiveSessionProvider);
-  if (hasActive) {
-    final session = ref.read(activeSessionProvider).valueOrNull?.session;
-    final paths = await openCameraCapture(
-      context,
-      accentColor:
-          session != null ? Color(session.subjectColorValue) : null,
-    );
-    if (paths != null && paths.isNotEmpty && context.mounted) {
-      final added =
-          await ref.read(activeSessionProvider.notifier).addCaptures(paths);
-      if (context.mounted) {
-        context.showSnack(
-          added > 0 ? 'Đã thêm $added ảnh' : 'Không thêm được ảnh',
-          isError: added == 0,
-        );
-      }
-    }
-  } else {
-    context.push(RoutePaths.sessionStart);
-  }
-}
-
-class _HomeCaptureFab extends ConsumerWidget {
-  const _HomeCaptureFab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final hasActive = ref.watch(hasActiveSessionProvider);
-    final showFab = ref.watch(
-      dashboardProvider.select((d) => d.hasValue && !d.hasError),
-    );
-    if (!showFab) return const SizedBox.shrink();
-
-    return FloatingActionButton.extended(
-      onPressed: () => _openCapture(context, ref),
-      icon: const Icon(Icons.camera_alt_rounded),
-      label: Text(hasActive ? 'Tiếp tục' : 'Chụp'),
+    return QuickCaptureCard(
+      onCapture: () => runHomeCameraIngest(context, ref),
+      onGalleryImport: () => runHomeGalleryIngest(context, ref),
     );
   }
 }

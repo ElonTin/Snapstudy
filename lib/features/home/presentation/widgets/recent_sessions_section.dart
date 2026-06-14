@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/routing/route_paths.dart';
+import 'package:snapstudy/core/widgets/app_scaffold.dart';
 import 'package:snapstudy/features/home/domain/entities/recent_session.dart';
 import 'package:snapstudy/features/home/presentation/utils/dashboard_formatters.dart';
 import 'package:snapstudy/features/home/presentation/widgets/dashboard_section_header.dart';
@@ -19,7 +19,7 @@ class RecentSessionsSection extends StatelessWidget {
         DashboardSectionHeader(
           title: 'Buổi học gần đây',
           actionLabel: 'Xem tất cả',
-          onAction: () => context.push(RoutePaths.sessionStart),
+          onAction: () => context.push(RoutePaths.sessionsHistory),
         ),
         ...sessions.map((s) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -40,55 +40,69 @@ class _SessionTile extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final accent = Color(session.subjectColorValue);
 
-    return Material(
-      color: colors.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-      child: InkWell(
-        onTap: () => context.push(RoutePaths.sessionDetailPath(session.id)),
-        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _statusIcon(session.status),
-                  color: accent,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
+    return AppCard(
+      onTap: () => context.push(RoutePaths.sessionDetailPath(session.id)),
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              _statusIcon(session.status),
+              color: accent,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      session.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                    Expanded(
+                      child: Text(
+                        session.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${session.subjectName} · ${session.photoCount} ảnh · ${DashboardFormatters.relativeTime(session.startedAt)}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: colors.onSurfaceVariant,
-                          ),
-                    ),
+                    const SizedBox(width: 12),
+                    _StatusChip(session: session),
                   ],
                 ),
-              ),
-              _StatusChip(session: session),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  session.subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${session.photoCount} ảnh · ${DashboardFormatters.relativeTime(session.startedAt)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -6,6 +6,8 @@ import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/errors/failures.dart';
 import 'package:snapstudy/core/utils/extensions.dart';
 import 'package:snapstudy/core/widgets/app_button.dart';
+import 'package:snapstudy/core/widgets/app_loading.dart';
+import 'package:snapstudy/core/widgets/app_scaffold.dart';
 import 'package:snapstudy/features/subjects/domain/constants/subject_presets.dart';
 import 'package:snapstudy/features/subjects/presentation/providers/subject_providers.dart';
 import 'package:snapstudy/features/subjects/presentation/widgets/subject_appearance_picker.dart';
@@ -111,75 +113,94 @@ class SubjectFormPage extends HookConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEdit ? 'Sửa môn học' : 'Môn học mới'),
+        scrolledUnderElevation: 1,
       ),
       body: isLoading.value
-          ? const Center(child: CircularProgressIndicator())
+          ? const AppLoading(fullScreen: true, message: 'Đang tải...')
           : ListView(
               padding: const EdgeInsets.all(AppConstants.defaultPadding),
               children: [
-                Center(
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: selectedColor.value.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: Icon(
-                      selectedIcon.value,
-                      size: 40,
-                      color: selectedColor.value,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Tên môn học *',
-                    hintText: 'VD: Toán 12',
-                  ),
-                  textCapitalization: TextCapitalization.sentences,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: descController,
-                  decoration: const InputDecoration(
-                    labelText: 'Mô tả (tuỳ chọn)',
-                    hintText: 'Ghi chú ngắn về môn học',
-                  ),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 20),
-                foldersAsync.when(
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, _) => const SizedBox.shrink(),
-                  data: (folders) => DropdownButtonFormField<String?>(
-                    initialValue: selectedFolderId.value,
-                    decoration: const InputDecoration(labelText: 'Thư mục'),
-                    items: [
-                      const DropdownMenuItem(
-                        value: null,
-                        child: Text('Không có thư mục'),
+                AppCard(
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: selectedColor.value.withValues(alpha: 0.15),
+                          borderRadius:
+                              BorderRadius.circular(AppConstants.largeRadius),
+                        ),
+                        child: Icon(
+                          selectedIcon.value,
+                          size: 40,
+                          color: selectedColor.value,
+                        ),
                       ),
-                      ...folders.map(
-                        (f) => DropdownMenuItem(
-                          value: f.id,
-                          child: Text(f.name),
+                      const SizedBox(height: 24),
+                      TextField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Tên môn học *',
+                          hintText: 'VD: Toán 12',
+                        ),
+                        textCapitalization: TextCapitalization.sentences,
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: descController,
+                        decoration: const InputDecoration(
+                          labelText: 'Mô tả (tuỳ chọn)',
+                          hintText: 'Ghi chú ngắn về môn học',
+                        ),
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 20),
+                      foldersAsync.when(
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, _) => const SizedBox.shrink(),
+                        data: (folders) => DropdownButtonFormField<String?>(
+                          initialValue: selectedFolderId.value,
+                          decoration:
+                              const InputDecoration(labelText: 'Thư mục'),
+                          items: [
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text('Không có thư mục'),
+                            ),
+                            ...folders.map(
+                              (f) => DropdownMenuItem(
+                                value: f.id,
+                                child: Text(f.name),
+                              ),
+                            ),
+                          ],
+                          onChanged: (v) => selectedFolderId.value = v,
                         ),
                       ),
                     ],
-                    onChanged: (v) => selectedFolderId.value = v,
                   ),
                 ),
-                const SizedBox(height: 24),
-                SubjectAppearancePicker(
-                  selectedColor: selectedColor.value,
-                  selectedIcon: selectedIcon.value,
-                  onColorChanged: (c) => selectedColor.value = c,
-                  onIconChanged: (i) => selectedIcon.value = i,
+                const SizedBox(height: AppConstants.sectionSpacing),
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const AppSectionHeader(
+                        title: 'Giao diện môn học',
+                        subtitle: 'Chọn màu và biểu tượng',
+                      ),
+                      const SizedBox(height: 16),
+                      SubjectAppearancePicker(
+                        selectedColor: selectedColor.value,
+                        selectedIcon: selectedIcon.value,
+                        onColorChanged: (c) => selectedColor.value = c,
+                        onIconChanged: (i) => selectedIcon.value = i,
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppConstants.sectionSpacing),
                 AppButton(
                   label: isEdit ? 'Lưu thay đổi' : 'Tạo môn học',
                   expand: true,

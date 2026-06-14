@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:snapstudy/core/env/env_config.dart';
-import 'package:snapstudy/features/ai_summary/presentation/providers/gemini_providers.dart';
+import 'package:snapstudy/features/ai/presentation/providers/llm_providers.dart';
 import 'package:snapstudy/features/sessions/presentation/providers/session_pipeline_provider.dart';
 import 'package:snapstudy/features/mindmap/data/repositories/mindmap_repository_impl.dart';
 import 'package:snapstudy/features/mindmap/domain/entities/session_mindmap.dart';
@@ -14,7 +14,7 @@ final useMockMindmapProvider = Provider<bool>((ref) => EnvConfig.useMockMindmap)
 final mindmapRepositoryProvider = Provider<MindmapRepository>((ref) {
   return MindmapRepositoryImpl(
     sessions: ref.watch(sessionRepositoryProvider),
-    gemini: ref.watch(geminiApiClientProvider),
+    llm: ref.watch(textLlmClientProvider),
   );
 });
 

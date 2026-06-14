@@ -12,7 +12,7 @@ import 'package:snapstudy/features/flashcards/data/repositories/flashcard_reposi
 import 'package:snapstudy/features/spaced_repetition/data/repositories/spaced_repetition_repository_impl.dart';
 import 'package:snapstudy/features/subjects/data/datasources/subject_local_datasource.dart';
 import 'package:snapstudy/features/subjects/data/repositories/subject_repository_impl.dart';
-import '../../helpers/fake_gemini_api_client.dart';
+import '../../helpers/fake_llm_json_client.dart';
 import '../../helpers/hive_test_helper.dart';
 import '../../helpers/session_fixtures.dart';
 import '../../helpers/test_helpers.dart';
@@ -34,7 +34,7 @@ void main() {
     final subjects = SubjectRepositoryImpl(SubjectLocalDataSource());
     final flashcards = FlashcardRepositoryImpl(
       sessions: sessions,
-      gemini: FakeGeminiApiClient(const Success('{}')),
+      llm: FakeLlmJsonClient(const Success('{}')),
     );
     final sr = SpacedRepetitionRepositoryImpl(
       sessions: sessions,

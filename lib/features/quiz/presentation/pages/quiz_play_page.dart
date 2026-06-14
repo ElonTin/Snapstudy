@@ -3,12 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/theme/app_colors.dart';
 import 'package:snapstudy/core/utils/extensions.dart';
+import 'package:snapstudy/core/widgets/app_button.dart';
 import 'package:snapstudy/core/widgets/app_loading.dart';
+import 'package:snapstudy/core/widgets/app_scaffold.dart';
+import 'package:snapstudy/features/quiz/domain/entities/quiz_answer_record.dart';
 import 'package:snapstudy/features/quiz/domain/entities/quiz_difficulty.dart';
+import 'package:snapstudy/features/weak_areas/data/datasources/weak_areas_local_datasource.dart';
 import 'package:snapstudy/features/quiz/domain/entities/quiz_question.dart';
 import 'package:snapstudy/features/quiz/domain/entities/quiz_score_result.dart';
 import 'package:snapstudy/features/quiz/domain/entities/session_quiz.dart';
 import 'package:snapstudy/features/quiz/presentation/providers/quiz_providers.dart';
+import 'package:snapstudy/features/quiz/presentation/widgets/quiz_result_sheet.dart';
+import 'package:snapstudy/features/sessions/presentation/providers/session_study_timer_provider.dart';
+import 'package:snapstudy/features/sessions/presentation/widgets/session_study_timer_chip.dart';
 
 class QuizPlayPage extends ConsumerStatefulWidget {
   const QuizPlayPage({super.key, required this.sessionId});
@@ -20,12 +27,27 @@ class QuizPlayPage extends ConsumerStatefulWidget {
 }
 
 class _QuizPlayPageState extends ConsumerState<QuizPlayPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      bindSessionStudyTimer(ref, widget.sessionId);
+    });
+  }
+
+  @override
+  void dispose() {
+    ref.read(sessionStudyTimerProvider.notifier).detach();
+    super.dispose();
+  }
+
   QuizDifficulty? _difficulty;
   List<QuizQuestion> _questions = [];
   var _index = 0;
   int? _selectedIndex;
   var _correctCount = 0;
   var _isSaving = false;
+  final _answers = <QuizAnswerRecord>[];
 
   void _startQuiz(SessionQuiz quiz, QuizDifficulty level) {
     final filtered = quiz.questionsForDifficulty(level);
@@ -39,6 +61,25 @@ class _QuizPlayPageState extends ConsumerState<QuizPlayPage> {
       _index = 0;
       _selectedIndex = null;
       _correctCount = 0;
+      _answers.clear();
+    });
+  }
+
+  /// Làm lại chỉ các câu sai từ lần vừa xong.
+  void _retryWrongAnswers(List<QuizQuestion> allQuestions) {
+    final wrongIds = _answers
+        .where((a) => !a.isCorrect)
+        .map((a) => a.questionId)
+        .toSet();
+    final wrongQuestions =
+        allQuestions.where((q) => wrongIds.contains(q.id)).toList();
+    if (wrongQuestions.isEmpty) return;
+    setState(() {
+      _questions = wrongQuestions;
+      _index = 0;
+      _selectedIndex = null;
+      _correctCount = 0;
+      _answers.clear();
     });
   }
 
@@ -51,8 +92,21 @@ class _QuizPlayPageState extends ConsumerState<QuizPlayPage> {
     });
   }
 
+  void _recordCurrentAnswer() {
+    final question = _questions[_index];
+    _answers.add(
+      QuizAnswerRecord(
+        questionId: question.id,
+        selectedIndex: _selectedIndex!,
+        isCorrect: question.isCorrectAnswer(_selectedIndex!),
+      ),
+    );
+  }
+
   Future<void> _nextOrFinish() async {
     if (_selectedIndex == null) return;
+
+    _recordCurrentAnswer();
 
     if (_index < _questions.length - 1) {
       setState(() {
@@ -70,6 +124,7 @@ class _QuizPlayPageState extends ConsumerState<QuizPlayPage> {
       correctCount: correctCount,
       totalCount: totalCount,
       completedAt: DateTime.now(),
+      answers: List.unmodifiable(_answers),
     );
 
     setState(() => _isSaving = true);
@@ -78,29 +133,34 @@ class _QuizPlayPageState extends ConsumerState<QuizPlayPage> {
           result: result,
         );
     ref.invalidate(sessionQuizProvider(widget.sessionId));
+    await WeakAreasLocalDataSource().delete(widget.sessionId);
 
     if (mounted) {
+      // Snapshot câu hỏi trước khi reset state
+      final allQuestions = List<QuizQuestion>.from(_questions);
+
       setState(() {
         _isSaving = false;
         _difficulty = null;
         _questions = [];
       });
-      await showDialog<void>(
+
+      // Hiển thị Bottom Sheet kết quả
+      final action = await showQuizResultSheet(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Kết quả quiz'),
-          content: Text(
-            'Bạn trả lời đúng $correctCount/$totalCount câu '
-            '(${result.scorePercent}%) · Mức ${difficulty.label}',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Đóng'),
-            ),
-          ],
-        ),
+        result: result,
+        questions: allQuestions,
+        sessionId: widget.sessionId,
       );
+
+      // Xử lý action người dùng chọn
+      if (action == null) return;
+      if (mounted) {
+        final quizAsync =
+            ref.read(sessionQuizProvider(widget.sessionId));
+        final quiz = quizAsync.valueOrNull;
+        if (quiz != null) _retryWrongAnswers(quiz.questions);
+      }
     }
   }
 
@@ -110,8 +170,10 @@ class _QuizPlayPageState extends ConsumerState<QuizPlayPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Làm quiz')),
-      body: quizAsync.when(
-        loading: () => const AppLoading(fullScreen: true),
+      body: Stack(
+        children: [
+          quizAsync.when(
+        loading: () => const AppLoading(fullScreen: true, useSkeleton: true),
         error: (e, _) => Center(child: Text('$e')),
         data: (quiz) {
           if (quiz == null || !quiz.isReady) {
@@ -133,87 +195,153 @@ class _QuizPlayPageState extends ConsumerState<QuizPlayPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    Chip(
-                      label: Text(_difficulty!.label),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${_index + 1}/${_questions.length}',
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                  ],
+                AppCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              _difficulty!.label,
+                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            'Câu ${_index + 1}/${_questions.length}',
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${(progress * 100).round()}%',
+                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.secondary,
+                                ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 6,
+                          backgroundColor: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(value: progress),
                 const SizedBox(height: 20),
                 Text(
                   question.prompt,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w600,
+                        height: 1.3,
                       ),
                 ),
                 const SizedBox(height: 8),
-                Chip(
-                  label: Text(question.difficulty.label),
-                  visualDensity: VisualDensity.compact,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    question.difficulty.label,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSecondaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Expanded(
                   child: ListView.separated(
                     itemCount: question.choices.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, i) {
                       final selected = _selectedIndex == i;
                       final isCorrect = question.correctIndex == i;
                       Color? bg;
+                      Color? borderColor;
                       if (_selectedIndex != null) {
                         if (isCorrect) {
-                          bg = Colors.green.withValues(alpha: 0.15);
+                          bg = Colors.green.withValues(alpha: 0.12);
+                          borderColor = Colors.green.withValues(alpha: 0.5);
                         } else if (selected) {
-                          bg = Colors.red.withValues(alpha: 0.12);
+                          bg = Colors.red.withValues(alpha: 0.1);
+                          borderColor = Colors.red.withValues(alpha: 0.4);
                         }
                       }
 
-                      return Material(
-                        color: bg ??
-                            Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(12),
-                        child: InkWell(
-                          onTap: _selectedIndex == null
-                              ? () => _selectAnswer(i)
-                              : null,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 14,
-                                  backgroundColor:
-                                      AppColors.primary.withValues(alpha: 0.2),
-                                  child: Text(
-                                    String.fromCharCode(65 + i),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
+                      return AppCard(
+                        onTap: _selectedIndex == null
+                            ? () => _selectAnswer(i)
+                            : null,
+                        color: bg,
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: selected
+                                    ? (isCorrect
+                                        ? Colors.green.withValues(alpha: 0.2)
+                                        : Colors.red.withValues(alpha: 0.15))
+                                    : AppColors.primary.withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                                border: borderColor != null
+                                    ? Border.all(color: borderColor)
+                                    : null,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  String.fromCharCode(65 + i),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: selected
+                                        ? (isCorrect
+                                            ? Colors.green.shade700
+                                            : Colors.red.shade700)
+                                        : AppColors.primary,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(child: Text(question.choices[i])),
-                                if (_selectedIndex != null && isCorrect)
-                                  const Icon(Icons.check_circle,
-                                      color: Colors.green),
-                                if (selected && !isCorrect)
-                                  const Icon(Icons.cancel, color: Colors.red),
-                              ],
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Text(
+                                question.choices[i],
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                            ),
+                            if (_selectedIndex != null && isCorrect)
+                              Icon(Icons.check_circle,
+                                  color: Colors.green.shade600, size: 22),
+                            if (selected && !isCorrect)
+                              Icon(Icons.cancel,
+                                  color: Colors.red.shade600, size: 22),
+                          ],
                         ),
                       );
                     },
@@ -221,38 +349,56 @@ class _QuizPlayPageState extends ConsumerState<QuizPlayPage> {
                 ),
                 if (_selectedIndex != null) ...[
                   const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primaryContainer
-                          .withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      question.explanation,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                  AppCard(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer
+                        .withValues(alpha: 0.4),
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline,
+                          size: 20,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            question.explanation,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
                 const SizedBox(height: 16),
-                FilledButton(
+                AppButton(
+                  label: _isSaving
+                      ? 'Đang lưu...'
+                      : _index < _questions.length - 1
+                          ? 'Câu tiếp theo'
+                          : 'Xem kết quả',
+                  variant: AppButtonVariant.primary,
+                  expand: true,
+                  isLoading: _isSaving,
                   onPressed: _selectedIndex == null || _isSaving
                       ? null
                       : _nextOrFinish,
-                  child: Text(
-                    _isSaving
-                        ? 'Đang lưu...'
-                        : _index < _questions.length - 1
-                            ? 'Câu tiếp theo'
-                            : 'Xem kết quả',
-                  ),
                 ),
               ],
             ),
           );
         },
+      ),
+          const Positioned(
+            top: 0,
+            right: 12,
+            child: SafeArea(child: SessionStudyTimerChip()),
+          ),
+        ],
       ),
     );
   }
@@ -274,20 +420,12 @@ class _DifficultyPicker extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            quiz.title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+          AppSectionHeader(
+            title: quiz.title,
+            subtitle:
+                '${quiz.questions.length} câu trong đề · Chọn mức độ',
           ),
-          const SizedBox(height: 8),
-          Text(
-            '${quiz.questions.length} câu trong đề · Chọn mức độ',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           _DifficultyTile(
             title: QuizDifficulty.easy.label,
             subtitle:
@@ -331,13 +469,46 @@ class _DifficultyTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.primary),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
+    return AppCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppColors.primary),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ],
       ),
     );
   }

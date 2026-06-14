@@ -206,15 +206,19 @@ class GeminiApiClient {
     final url =
         '${EnvConfig.geminiBaseUrl}/v1beta/models/${EnvConfig.geminiModel}:generateContent';
 
-    const prompt = '''
+    const prompt = r'''
 Bạn là hệ thống OCR chuyên nghiệp. Trích xuất TOÀN BỘ văn bản nhìn thấy trong ảnh tài liệu/bài giảng/bài tập.
 
 Quy tắc:
 - Giữ đúng ngôn ngữ gốc (tiếng Việt, tiếng Anh, hoặc hỗn hợp)
-- Giữ số thứ tự câu hỏi, xuống dòng, bullet như trên ảnh
+- Giữ bố cục: mỗi câu hỏi/đoạn cách nhau bằng dòng trống
+- Câu hỏi trắc nghiệm: "Câu 1:", đáp án "a.", "b." mỗi dòng
+- Công thức toán/hóa/lý: dùng LaTeX trong $...$ (inline) hoặc $$...$$ (riêng dòng)
+  Ví dụ: $x^2+1$, $\frac{a}{b}$, $\sqrt{x}$, $\int_0^1 f(x)\,dx$
+- Ký hiệu đặc biệt dùng LaTeX: \times, \leq, \geq, \neq, \alpha, \pi
 - Chỉ ghi những gì đọc được rõ; phần mờ ghi [...]
 - KHÔNG đoán, KHÔNG bịa, KHÔNG giải thích
-- Trả về plain text thuần, không markdown, không JSON
+- Trả về text thuần (có thể chứa ký hiệu $ LaTeX), không markdown, không JSON
 ''';
 
     try {
@@ -279,5 +283,81 @@ Quy tắc:
     final error = data['error'];
     if (error is! Map<String, dynamic>) return null;
     return error['message'] as String?;
+  }
+
+  /// Plain-text reply (chat) — không ép JSON.
+  Future<Result<String>> generateText({
+    required String prompt,
+    required int maxOutputTokens,
+    int maxRetries = 2,
+  }) async {
+    Failure? lastFailure;
+    for (var attempt = 0; attempt < maxRetries; attempt++) {
+      final response = await _requestPlainGenerateContent(
+        prompt: prompt,
+        maxOutputTokens: maxOutputTokens,
+        networkRetries: 1,
+      );
+      if (response.isSuccess) {
+        final text = response.valueOrNull?.text?.trim();
+        if (text != null && text.isNotEmpty) return Success(text);
+      }
+      lastFailure = response.failureOrNull;
+      if (attempt < maxRetries - 1) {
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+      }
+    }
+    return Error(
+      lastFailure ?? const ServerFailure('Gemini chat trả về rỗng.'),
+    );
+  }
+
+  Future<Result<_GeneratePayload>> _requestPlainGenerateContent({
+    required String prompt,
+    required int maxOutputTokens,
+    required int networkRetries,
+  }) async {
+    final apiKey = EnvConfig.geminiApiKey;
+    if (apiKey == null || apiKey.isEmpty) {
+      return const Error(
+        ValidationFailure('Chưa cấu hình GEMINI_API_KEY trong .env'),
+      );
+    }
+
+    final url =
+        '${EnvConfig.geminiBaseUrl}/v1beta/models/${EnvConfig.geminiModel}:generateContent';
+
+    Object? lastError;
+    for (var attempt = 0; attempt < networkRetries; attempt++) {
+      try {
+        final response = await _dio.post<Map<String, dynamic>>(
+          url,
+          queryParameters: {'key': apiKey},
+          data: {
+            'contents': [
+              {
+                'parts': [
+                  {'text': prompt},
+                ],
+              },
+            ],
+            'generationConfig': {
+              'temperature': 0.5,
+              'maxOutputTokens': maxOutputTokens,
+            },
+          },
+        );
+        return Success(_parsePayload(response.data));
+      } on DioException catch (e) {
+        lastError = e;
+        if (e.response?.statusCode == 429) {
+          return Error(ServerFailure(_quotaExceededMessage(e)));
+        }
+      } catch (e) {
+        lastError = e;
+        break;
+      }
+    }
+    return Error(ServerFailure('Gemini chat lỗi: $lastError'));
   }
 }

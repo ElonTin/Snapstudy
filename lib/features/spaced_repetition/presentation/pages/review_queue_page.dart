@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/theme/app_colors.dart';
 import 'package:snapstudy/core/utils/extensions.dart';
+import 'package:snapstudy/core/widgets/app_button.dart';
+import 'package:snapstudy/core/widgets/app_empty_state.dart';
 import 'package:snapstudy/core/widgets/app_loading.dart';
+import 'package:snapstudy/core/widgets/app_scaffold.dart';
 import 'package:snapstudy/features/flashcards/domain/entities/review_rating.dart';
 import 'package:snapstudy/features/spaced_repetition/presentation/providers/spaced_repetition_providers.dart';
 
@@ -37,9 +40,19 @@ class _ReviewQueuePageState extends ConsumerState<ReviewQueuePage> {
             data: (stats) => Padding(
               padding: const EdgeInsets.only(right: 12),
               child: Center(
-                child: Text(
-                  'Nhớ ${stats.retentionPercent}%',
-                  style: Theme.of(context).textTheme.labelMedium,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Nhớ ${stats.retentionPercent}%',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSecondaryContainer,
+                        ),
+                  ),
                 ),
               ),
             ),
@@ -51,6 +64,7 @@ class _ReviewQueuePageState extends ConsumerState<ReviewQueuePage> {
       body: queueAsync.when(
         loading: () => const AppLoading(
           fullScreen: true,
+          useSkeleton: true,
           message: 'Đang tải hàng đợi ôn tập...',
         ),
         error: (e, _) => Center(child: Text('$e')),
@@ -86,24 +100,51 @@ class _ReviewQueuePageState extends ConsumerState<ReviewQueuePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                LinearProgressIndicator(value: progress),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text('${session.index + 1}/${session.queue.length}'),
-                    const Spacer(),
-                    _DifficultyChip(score: card.difficultyScore),
-                    if (card.isOverdue)
-                      const Padding(
-                        padding: EdgeInsets.only(left: 8),
-                        child: Icon(Icons.warning_amber, size: 18),
+                AppCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            '${session.index + 1}/${session.queue.length}',
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          const Spacer(),
+                          _DifficultyChip(score: card.difficultyScore),
+                          if (card.isOverdue)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: Icon(
+                                Icons.warning_amber_rounded,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                        ],
                       ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${item.subjectName} · ${item.deckTitle}',
-                  style: Theme.of(context).textTheme.bodySmall,
+                      const SizedBox(height: 6),
+                      Text(
+                        '${item.subjectName} · ${item.deckTitle}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 6,
+                          backgroundColor: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Expanded(
@@ -121,13 +162,15 @@ class _ReviewQueuePageState extends ConsumerState<ReviewQueuePage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Text(
                   session.showBack
                       ? 'Chạm để xem câu hỏi'
                       : 'Chạm để lật thẻ',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.labelSmall,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
                 const SizedBox(height: 16),
                 if (session.showBack) ...[
@@ -136,10 +179,12 @@ class _ReviewQueuePageState extends ConsumerState<ReviewQueuePage> {
                     onRate: (r) => _onRate(r),
                   ),
                 ] else
-                  FilledButton(
+                  AppButton(
+                    label: 'Hiện đáp án',
+                    variant: AppButtonVariant.primary,
+                    expand: true,
                     onPressed: () =>
                         ref.read(reviewSessionControllerProvider.notifier).flip(),
-                    child: const Text('Hiện đáp án'),
                   ),
               ],
             ),
@@ -182,44 +227,77 @@ class _ReviewCardFace extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
           colors: isBack
               ? [AppColors.aiGradientEnd, AppColors.aiGradientStart]
               : [AppColors.primary, AppColors.aiGradientStart],
         ),
         borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: AppColors.primary.withValues(alpha: 0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
+            Align(
+              alignment: Alignment.topRight,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  isBack ? 'MẶT SAU' : 'MẶT TRƯỚC',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Colors.white70,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+            ),
+            const Spacer(),
             Text(
               text,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
+                    height: 1.35,
                   ),
             ),
             if (hint != null && hint!.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(
-                hint!,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white70,
-                    ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  hint!,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white70,
+                      ),
+                ),
               ),
             ],
+            const Spacer(),
           ],
         ),
       ),
@@ -240,16 +318,22 @@ class _RatingRow extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: OutlinedButton(
+              child: AppButton(
+                label: 'Quên',
+                variant: AppButtonVariant.outline,
+                expand: true,
+                isLoading: submitting,
                 onPressed: submitting ? null : () => onRate(ReviewRating.again),
-                child: const Text('Quên'),
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             Expanded(
-              child: OutlinedButton(
+              child: AppButton(
+                label: 'Khó',
+                variant: AppButtonVariant.outline,
+                expand: true,
+                isLoading: submitting,
                 onPressed: submitting ? null : () => onRate(ReviewRating.hard),
-                child: const Text('Khó'),
               ),
             ),
           ],
@@ -258,16 +342,22 @@ class _RatingRow extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: FilledButton(
+              child: AppButton(
+                label: 'Thuộc',
+                variant: AppButtonVariant.primary,
+                expand: true,
+                isLoading: submitting,
                 onPressed: submitting ? null : () => onRate(ReviewRating.good),
-                child: const Text('Thuộc'),
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             Expanded(
-              child: FilledButton.tonal(
+              child: AppButton(
+                label: 'Dễ',
+                variant: AppButtonVariant.secondary,
+                expand: true,
+                isLoading: submitting,
                 onPressed: submitting ? null : () => onRate(ReviewRating.easy),
-                child: const Text('Dễ'),
               ),
             ),
           ],
@@ -285,10 +375,31 @@ class _DifficultyChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = score >= 70 ? 'Dễ' : score >= 40 ? 'TB' : 'Khó';
-    return Chip(
-      label: Text('$label · $score'),
-      visualDensity: VisualDensity.compact,
-      padding: EdgeInsets.zero,
+    final colors = Theme.of(context).colorScheme;
+    final chipColor = score >= 70
+        ? colors.tertiaryContainer
+        : score >= 40
+            ? colors.secondaryContainer
+            : colors.errorContainer;
+    final textColor = score >= 70
+        ? colors.onTertiaryContainer
+        : score >= 40
+            ? colors.onSecondaryContainer
+            : colors.onErrorContainer;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: chipColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$label · $score',
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.w600,
+            ),
+      ),
     );
   }
 }
@@ -300,27 +411,14 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.check_circle_outline, size: 72),
-            const SizedBox(height: 16),
-            Text(
-              'Không có thẻ đến hạn',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Hệ thống SM-2 sẽ nhắc khi đến lịch ôn.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            FilledButton(onPressed: onBack, child: const Text('Quay lại')),
-          ],
-        ),
+    return AppEmptyState(
+      icon: Icons.check_circle_outline,
+      title: 'Không có thẻ đến hạn',
+      subtitle: 'Hệ thống SM-2 sẽ nhắc khi đến lịch ôn.',
+      action: AppButton(
+        label: 'Quay lại',
+        variant: AppButtonVariant.primary,
+        onPressed: onBack,
       ),
     );
   }
@@ -339,24 +437,14 @@ class _DoneState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.emoji_events_outlined, size: 72),
-            const SizedBox(height: 16),
-            Text(
-              'Hoàn tất $reviewed thẻ!',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text('Ước tính ghi nhớ: $retention%'),
-            const SizedBox(height: 24),
-            FilledButton(onPressed: onFinish, child: const Text('Xong')),
-          ],
-        ),
+    return AppEmptyState(
+      icon: Icons.emoji_events_outlined,
+      title: 'Hoàn tất $reviewed thẻ!',
+      subtitle: 'Ước tính ghi nhớ: $retention%',
+      action: AppButton(
+        label: 'Xong',
+        variant: AppButtonVariant.gold,
+        onPressed: onFinish,
       ),
     );
   }

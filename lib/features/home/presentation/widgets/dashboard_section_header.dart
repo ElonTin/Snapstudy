@@ -14,6 +14,8 @@ class DashboardSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
       child: Row(
@@ -21,14 +23,19 @@ class DashboardSectionHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                    color: colors.onSurface,
                   ),
             ),
           ),
           if (actionLabel != null && onAction != null)
             TextButton(
               onPressed: onAction,
+              style: TextButton.styleFrom(
+                foregroundColor: colors.secondary,
+              ),
               child: Text(actionLabel!),
             ),
         ],

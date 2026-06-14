@@ -18,6 +18,7 @@ abstract final class SubjectSuggester {
     required List<String> keywords,
     required List<Subject> subjects,
     String? currentSubjectId,
+    Map<String, double> tfIdfScores = const {},
   }) {
     if (subjects.isEmpty) return const SubjectSuggestion();
 
@@ -30,13 +31,22 @@ abstract final class SubjectSuggester {
       var score = 0.0;
 
       for (final keyword in keywords) {
+        final tfidf = tfIdfScores[keyword] ?? 1.0;
         if (name.contains(keyword) || keyword.contains(name)) {
-          score += 2.5;
+          score += 2.5 * tfidf;
         }
       }
 
       for (final word in name.split(RegExp(r'\s+'))) {
-        if (word.length >= 3 && keywords.contains(word)) score += 1.5;
+        if (word.length >= 3 && keywords.contains(word)) {
+          score += 1.5 * (tfIdfScores[word] ?? 1.0);
+        }
+      }
+
+      for (final entry in tfIdfScores.entries) {
+        if (name.contains(entry.key)) {
+          score += entry.value * 0.5;
+        }
       }
 
       if (subject.id == currentSubjectId) score += 0.5;
@@ -54,7 +64,7 @@ abstract final class SubjectSuggester {
     return SubjectSuggestion(
       subjectId: best.id,
       subjectName: best.name,
-      confidence: (bestScore / 5).clamp(0, 1),
+      confidence: (bestScore / 8).clamp(0, 1),
     );
   }
 }

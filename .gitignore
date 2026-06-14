@@ -1,51 +1,141 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+# =============================================================================
+# SNAPSTUDY — Flutter + Android + iOS + .NET
+# =============================================================================
 
-# IntelliJ related
+# --- Secrets & local config (NEVER commit) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.keystore
+*.jks
+key.properties
+**/secrets/
+!**/secrets/.gitkeep
+server/SnapStudy.Api/secrets/firebase-service-account.json
+server/SnapStudy.Api/data/device-registrations.json
+
+# Firebase local options (generate per machine via flutterfire configure)
+lib/firebase_options.dart
+
+# --- OS ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# --- IDE / Editor ---
+.idea/
 *.iml
 *.ipr
 *.iws
-.idea/
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# --- Flutter / Dart ---
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
 /coverage/
+**/doc/api/
+*.dart.js
+*.info.json
+*.js
+*.js_
+*.js.deps
+*.js.map
 
-# Symbolication related
+# Symbolication & obfuscation
 app.*.symbols
-
-# Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# Environment secrets (keep .env.example tracked)
-.env
-
-# Test Hive data
+# Test artifacts
 .test_hive/
+test/.test_hive/
+
+# --- Android ---
+**/android/.gradle/
+**/android/captures/
+**/android/local.properties
+**/android/key.properties
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+android/build/
+android/.gradle/
+android/app/build/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# --- iOS / macOS ---
+**/ios/**/*.mode1v3
+**/ios/**/*.mode2v3
+**/ios/**/*.moved-aside
+**/ios/**/*.pbxuser
+**/ios/**/*.perspectivev3
+**/ios/**/DerivedData/
+**/ios/**/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/App.framework
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+**/ios/Podfile.lock
+**/macos/Flutter/ephemeral/
+**/macos/Pods/
+
+# --- Web (if enabled later) ---
+lib/generated_plugin_registrant.dart
+
+# --- .NET / C# (SnapStudy.Api) ---
+**/bin/
+**/obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# --- Logs & temp ---
+*.log
+*.tmp
+*.temp
+*.cache
+migrate_working_dir/
+.history/
+.build/
+.buildlog/
+
+# --- Misc ---
+*.class
+*.pyc
+.atom/
+.svn/
+.swiftpm/

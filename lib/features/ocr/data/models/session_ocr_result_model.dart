@@ -10,6 +10,7 @@ class SessionOcrResultModel {
     required this.keywords,
     required this.averageConfidence,
     required this.hasEquations,
+    this.latexEquations = const [],
     required this.status,
     required this.processedAt,
     this.suggestedSubjectId,
@@ -37,6 +38,8 @@ class SessionOcrResultModel {
           (json['suggestedSubjectConfidence'] as num?)?.toDouble() ?? 0,
       averageConfidence: (json['averageConfidence'] as num).toDouble(),
       hasEquations: json['hasEquations'] as bool? ?? false,
+      latexEquations:
+          (json['latexEquations'] as List<dynamic>?)?.cast<String>() ?? [],
       status: OcrStatus.values.byName(json['status'] as String),
       processedAt: DateTime.parse(json['processedAt'] as String),
       errorMessage: json['errorMessage'] as String?,
@@ -52,6 +55,7 @@ class SessionOcrResultModel {
   final double suggestedSubjectConfidence;
   final double averageConfidence;
   final bool hasEquations;
+  final List<String> latexEquations;
   final OcrStatus status;
   final DateTime processedAt;
   final String? errorMessage;
@@ -66,6 +70,7 @@ class SessionOcrResultModel {
         'suggestedSubjectConfidence': suggestedSubjectConfidence,
         'averageConfidence': averageConfidence,
         'hasEquations': hasEquations,
+        'latexEquations': latexEquations,
         'status': status.name,
         'processedAt': processedAt.toIso8601String(),
         'errorMessage': errorMessage,
@@ -81,6 +86,7 @@ class SessionOcrResultModel {
         suggestedSubjectConfidence: suggestedSubjectConfidence,
         averageConfidence: averageConfidence,
         hasEquations: hasEquations,
+        latexEquations: latexEquations,
         status: status,
         processedAt: processedAt,
         errorMessage: errorMessage,
@@ -98,6 +104,7 @@ class SessionOcrResultModel {
         suggestedSubjectConfidence: result.suggestedSubjectConfidence,
         averageConfidence: result.averageConfidence,
         hasEquations: result.hasEquations,
+        latexEquations: result.latexEquations,
         status: result.status,
         processedAt: result.processedAt,
         errorMessage: result.errorMessage,

@@ -16,6 +16,11 @@ abstract final class MockAiSummaryGenerator {
     return SessionAiSummary(
       sessionId: session.id,
       detectedTopic: session.title,
+      shortSummary:
+          'Buổi ${session.subjectName}: ${session.title}.\n'
+          '${ocr.keywords.take(3).join(', ')}.\n'
+          'Đã OCR ${ocr.successCount} ảnh.\n'
+          'Bật GEMINI_API_KEY để tóm tắt thật.',
       overview:
           'Tóm tắt mẫu từ OCR buổi ${session.subjectName}. '
           'Bật GEMINI_API_KEY để dùng Gemini thật.',

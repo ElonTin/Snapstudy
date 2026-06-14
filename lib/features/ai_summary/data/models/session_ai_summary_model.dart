@@ -5,6 +5,7 @@ class SessionAiSummaryModel {
   const SessionAiSummaryModel({
     required this.sessionId,
     required this.detectedTopic,
+    required this.shortSummary,
     required this.overview,
     required this.keyPoints,
     required this.bulletSummary,
@@ -16,10 +17,12 @@ class SessionAiSummaryModel {
   });
 
   factory SessionAiSummaryModel.fromJson(Map<String, dynamic> json) {
+    final overview = json['overview'] as String? ?? '';
     return SessionAiSummaryModel(
       sessionId: json['sessionId'] as String,
       detectedTopic: json['detectedTopic'] as String,
-      overview: json['overview'] as String,
+      shortSummary: json['shortSummary'] as String? ?? overview,
+      overview: overview,
       keyPoints: (json['keyPoints'] as List<dynamic>).cast<String>(),
       bulletSummary: (json['bulletSummary'] as List<dynamic>).cast<String>(),
       topics: (json['topics'] as List<dynamic>).cast<String>(),
@@ -32,6 +35,7 @@ class SessionAiSummaryModel {
 
   final String sessionId;
   final String detectedTopic;
+  final String shortSummary;
   final String overview;
   final List<String> keyPoints;
   final List<String> bulletSummary;
@@ -44,6 +48,7 @@ class SessionAiSummaryModel {
   Map<String, dynamic> toJson() => {
         'sessionId': sessionId,
         'detectedTopic': detectedTopic,
+        'shortSummary': shortSummary,
         'overview': overview,
         'keyPoints': keyPoints,
         'bulletSummary': bulletSummary,
@@ -57,6 +62,7 @@ class SessionAiSummaryModel {
   SessionAiSummary toEntity() => SessionAiSummary(
         sessionId: sessionId,
         detectedTopic: detectedTopic,
+        shortSummary: shortSummary,
         overview: overview,
         keyPoints: keyPoints,
         bulletSummary: bulletSummary,
@@ -71,6 +77,7 @@ class SessionAiSummaryModel {
       SessionAiSummaryModel(
         sessionId: summary.sessionId,
         detectedTopic: summary.detectedTopic,
+        shortSummary: summary.shortSummary,
         overview: summary.overview,
         keyPoints: summary.keyPoints,
         bulletSummary: summary.bulletSummary,

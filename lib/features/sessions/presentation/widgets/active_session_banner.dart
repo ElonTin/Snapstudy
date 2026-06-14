@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/routing/route_paths.dart';
 import 'package:snapstudy/core/theme/app_colors.dart';
 import 'package:snapstudy/features/sessions/presentation/providers/session_providers.dart';
@@ -17,6 +18,7 @@ class ActiveSessionBanner extends ConsumerWidget {
     }
 
     final preview = ref.watch(activeSessionPreviewProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return preview.when(
       data: (state) {
@@ -31,16 +33,32 @@ class ActiveSessionBanner extends ConsumerWidget {
             color: Colors.transparent,
             child: InkWell(
               onTap: () => context.push(RoutePaths.sessionActive),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
               child: Ink(
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
                     colors: [
-                      AppColors.aiGradientStart,
-                      AppColors.aiGradientEnd,
+                      AppColors.primaryDark,
+                      AppColors.primary,
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius:
+                      BorderRadius.circular(AppConstants.defaultRadius),
+                  border: Border.all(
+                    color: AppColors.secondary.withValues(alpha: 0.35),
+                    width: 1,
+                  ),
+                  boxShadow: isDark
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                            blurRadius: 14,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -54,9 +72,18 @@ class ActiveSessionBanner extends ConsumerWidget {
                         height: 10,
                         decoration: BoxDecoration(
                           color: isRunning
-                              ? Colors.redAccent
-                              : Colors.amberAccent,
+                              ? const Color(0xFFEF5350)
+                              : AppColors.secondaryLight,
                           shape: BoxShape.circle,
+                          boxShadow: isRunning
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xFFEF5350)
+                                        .withValues(alpha: 0.5),
+                                    blurRadius: 6,
+                                  ),
+                                ]
+                              : null,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -72,7 +99,8 @@ class ActiveSessionBanner extends ConsumerWidget {
                                   .textTheme
                                   .labelMedium
                                   ?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.9),
+                                    color: AppColors.secondaryLight
+                                        .withValues(alpha: 0.9),
                                   ),
                             ),
                             Text(
@@ -96,7 +124,7 @@ class ActiveSessionBanner extends ConsumerWidget {
                             .textTheme
                             .titleMedium
                             ?.copyWith(
-                              color: Colors.white,
+                              color: AppColors.secondaryLight,
                               fontWeight: FontWeight.w700,
                               fontFeatures: const [
                                 FontFeature.tabularFigures(),
@@ -104,7 +132,10 @@ class ActiveSessionBanner extends ConsumerWidget {
                             ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(Icons.chevron_right, color: Colors.white),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.secondaryLight.withValues(alpha: 0.9),
+                      ),
                     ],
                   ),
                 ),

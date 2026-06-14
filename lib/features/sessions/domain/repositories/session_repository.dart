@@ -28,6 +28,16 @@ abstract interface class SessionRepository {
     required String imagePath,
   });
 
+  /// Thêm ảnh vào buổi đã kết thúc (tiếp tục học / OCR thêm).
+  Future<Result<StudySession>> appendCaptures({
+    required String sessionId,
+    required List<String> imagePaths,
+  });
+
+  Future<Result<StudySession>> beginStudyEngagement(String sessionId);
+
+  Future<Result<StudySession>> endStudyEngagement(String sessionId);
+
   Future<Result<void>> removeFromQueue({
     required String sessionId,
     required String itemId,
@@ -60,6 +70,16 @@ abstract interface class SessionRepository {
   Future<Result<StudySession>> applySessionMindmap({
     required String sessionId,
     required SessionMindmap mindmap,
+  });
+
+  Future<Result<StudySession>> updateSessionSubject({
+    required String sessionId,
+    required Subject subject,
+  });
+
+  Future<Result<StudySession>> setSessionProcessing({
+    required String sessionId,
+    required bool processing,
   });
 
   /// Flushes running segment into [accumulatedElapsedMs] and stops the clock.

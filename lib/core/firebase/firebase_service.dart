@@ -8,8 +8,14 @@ import 'package:snapstudy/firebase_options.dart';
 /// Firebase bootstrap — enabled only when `ENABLE_FIREBASE=true` in `.env`.
 abstract final class FirebaseService {
   static bool _initialized = false;
+  static Future<void>? _initFuture;
 
   static bool get isInitialized => _initialized;
+
+  /// Await Firebase before FCM — safe to call multiple times.
+  static Future<void> ensureInitialized() {
+    return _initFuture ??= init();
+  }
 
   static Future<void> init() async {
     if (!EnvConfig.enableFirebase) {

@@ -5,7 +5,7 @@ import 'package:snapstudy/features/camera/data/services/image_compress_service.d
 import 'package:snapstudy/features/preprocessing/domain/entities/preprocessing_options.dart';
 import 'package:snapstudy/features/preprocessing/domain/repositories/image_preprocessing_repository.dart';
 
-/// Compresses then preprocesses a capture (Phase 6 + 7).
+/// Chuẩn bị ảnh chụp/import: lưu bản gốc (nén nhẹ) và tùy chọn tiền xử lý OCR tạm.
 class CaptureProcessingService {
   CaptureProcessingService({
     required ImageCompressService compress,
@@ -16,34 +16,43 @@ class CaptureProcessingService {
   final ImageCompressService _compress;
   final ImagePreprocessingRepository _preprocess;
 
-  Future<String> processCapture(String sourcePath) async {
+  /// Nén nhẹ để lưu buổi học — giữ màu gốc, không warp/crop.
+  Future<String> prepareForStorage(String sourcePath) async {
     try {
       if (!await File(sourcePath).exists()) return sourcePath;
+      final compressed = await _compress.compress(sourcePath);
+      return await File(compressed).exists() ? compressed : sourcePath;
+    } catch (_) {
+      return sourcePath;
+    }
+  }
 
-      var current = await _compress.compress(sourcePath);
-      if (!await File(current).exists()) return sourcePath;
+  /// Alias cho luồng addCapture (chỉ nén, không làm hỏng ảnh hiển thị).
+  Future<String> processCapture(String sourcePath) =>
+      prepareForStorage(sourcePath);
 
-      if (!EnvConfig.enablePreprocessing) return current;
+  /// Tạo bản sao tạm chỉ dùng cho OCR (không ghi đè ảnh đã lưu).
+  Future<String> prepareOcrInput(String storedPath) async {
+    try {
+      if (!EnvConfig.enablePreprocessing) return storedPath;
+      if (!await File(storedPath).exists()) return storedPath;
 
       final result = await _preprocess.preprocess(
-        current,
+        storedPath,
         options: PreprocessingOptions.forOcr,
       );
 
       return result.fold(
         onSuccess: (processed) async {
           final out = processed.outputPath;
-          if (out != current && await File(current).exists()) {
-            try {
-              await File(current).delete();
-            } catch (_) {}
-          }
-          return await File(out).exists() ? out : current;
+          return out != storedPath && await File(out).exists()
+              ? out
+              : storedPath;
         },
-        onFailure: (_) => current,
+        onFailure: (_) => storedPath,
       );
     } catch (_) {
-      return sourcePath;
+      return storedPath;
     }
   }
 }

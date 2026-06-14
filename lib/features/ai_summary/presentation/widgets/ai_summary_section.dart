@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:snapstudy/core/constants/app_constants.dart';
+import 'package:snapstudy/core/utils/extensions.dart';
 import 'package:snapstudy/core/theme/app_colors.dart';
 import 'package:snapstudy/features/ai_summary/domain/entities/session_ai_summary.dart';
 import 'package:snapstudy/core/env/env_config.dart';
 import 'package:snapstudy/features/ai_summary/presentation/providers/ai_summary_providers.dart';
 import 'package:snapstudy/features/home/presentation/utils/dashboard_formatters.dart';
+import 'package:snapstudy/core/widgets/app_button.dart';
+import 'package:snapstudy/core/widgets/app_scaffold.dart';
 
 class AiSummarySection extends ConsumerWidget {
   const AiSummarySection({
@@ -24,43 +27,39 @@ class AiSummarySection extends ConsumerWidget {
     final colors = Theme.of(context).colorScheme;
     final isMock = ref.watch(useMockAiSummaryProvider);
 
-    return Card(
-      elevation: 0,
-      color: colors.surfaceContainerHighest,
-      child: Padding(
-        padding: const EdgeInsets.all(AppConstants.defaultPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppSectionHeader(
+            title: 'Tóm tắt AI',
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.auto_awesome,
-                  color: AppColors.aiGradientStart,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Tóm tắt AI',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.copy_outlined, size: 20),
+                  tooltip: 'Sao chép tóm tắt',
+                  onPressed: () {
+                    final text = [
+                      summary.detectedTopic,
+                      summary.shortSummary,
+                      if (summary.overview.isNotEmpty) summary.overview,
+                    ].join('\n\n');
+                    Clipboard.setData(ClipboardData(text: text));
+                    context.showSnack('Đã sao chép tóm tắt');
+                  },
                 ),
                 if (onRegenerate != null)
-                  TextButton.icon(
+                  AppButton(
+                    label: isRegenerating ? 'Đang tạo...' : 'Tạo lại',
+                    icon: Icons.refresh,
+                    variant: AppButtonVariant.text,
+                    isLoading: isRegenerating,
                     onPressed: isRegenerating ? null : onRegenerate,
-                    icon: isRegenerating
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.refresh, size: 18),
-                    label: Text(isRegenerating ? 'Đang tạo...' : 'Tạo lại'),
                   ),
               ],
             ),
+          ),
             if (isMock) ...[
               const SizedBox(height: 8),
               MaterialBanner(
@@ -79,6 +78,28 @@ class AiSummarySection extends ConsumerWidget {
             const SizedBox(height: 12),
             _TopicChip(topic: summary.detectedTopic),
             const SizedBox(height: 12),
+            Text(
+              'Tóm tắt nhanh',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              summary.shortSummary,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    height: 1.5,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Chi tiết',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 8),
             Text(
               summary.overview,
               style: Theme.of(context).textTheme.bodyMedium,
@@ -150,7 +171,6 @@ class AiSummarySection extends ConsumerWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

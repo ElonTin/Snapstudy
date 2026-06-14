@@ -11,12 +11,18 @@ class CachedFileImage extends StatefulWidget {
     this.fit = BoxFit.cover,
     this.borderRadius,
     int? cacheWidth,
-  }) : cacheWidth = cacheWidth ?? PerformanceConfig.captureThumbnailCacheWidth;
+    this.fullResolution = false,
+  }) : cacheWidth = fullResolution
+            ? null
+            : (cacheWidth ?? PerformanceConfig.captureThumbnailCacheWidth);
 
   final String path;
   final BoxFit fit;
   final BorderRadius? borderRadius;
-  final int cacheWidth;
+
+  /// Khi null → decode full resolution (viewer, preview sau chụp).
+  final int? cacheWidth;
+  final bool fullResolution;
 
   @override
   State<CachedFileImage> createState() => _CachedFileImageState();
@@ -71,7 +77,9 @@ class _CachedFileImageState extends State<CachedFileImage> {
             File(widget.path),
             fit: widget.fit,
             cacheWidth: widget.cacheWidth,
-            filterQuality: FilterQuality.medium,
+            filterQuality: widget.fullResolution
+                ? FilterQuality.high
+                : FilterQuality.medium,
             gaplessPlayback: true,
             errorBuilder: (_, _, _) => const Icon(Icons.broken_image_outlined),
           );

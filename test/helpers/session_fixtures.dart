@@ -69,6 +69,7 @@ StudySession testSessionWithDeck({
 const validSummaryJson = '''
 {
   "detectedTopic": "Đạo hàm",
+  "shortSummary": "Dòng 1\\nDòng 2\\nDòng 3",
   "overview": "Buổi học về đạo hàm cơ bản.",
   "keyPoints": ["Định nghĩa", "Quy tắc"],
   "bulletSummary": ["f'(x)", "Ứng dụng"],

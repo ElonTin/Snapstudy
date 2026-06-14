@@ -42,6 +42,7 @@ class _SnapStudyAppState extends ConsumerState<SnapStudyApp> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(pushRegistrationSyncProvider);
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
 

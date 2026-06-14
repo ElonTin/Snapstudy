@@ -19,6 +19,7 @@ class NotificationSchedulerService {
     await _local.cancel(NotificationIds.reviewDaily);
     await _local.cancel(NotificationIds.streakDaily);
     await _local.cancel(NotificationIds.sessionDaily);
+    await _local.cancelCardReminders();
 
     if (prefs.reviewRemindersEnabled && snapshot.dueCards > 0) {
       final overdueLine = snapshot.overdueCards > 0
@@ -69,6 +70,28 @@ class NotificationSchedulerService {
         channelId: NotificationChannels.session,
         payload: NotificationPayload.session,
       );
+    }
+
+    if (prefs.reviewRemindersEnabled) {
+      final now = DateTime.now();
+      final upcoming = snapshot.upcomingCardReminders
+          .where((r) => r.reviewAt.isAfter(now))
+          .take(24)
+          .toList();
+
+      for (final reminder in upcoming) {
+        final preview = reminder.cardFront.length > 60
+            ? '${reminder.cardFront.substring(0, 60)}…'
+            : reminder.cardFront;
+        await _local.scheduleAt(
+          id: NotificationIds.cardReminderId(reminder.cardId),
+          scheduledAt: reminder.reviewAt,
+          title: 'Ôn thẻ · ${reminder.sessionTitle}',
+          body: preview,
+          channelId: NotificationChannels.review,
+          payload: NotificationPayload.review,
+        );
+      }
     }
   }
 }

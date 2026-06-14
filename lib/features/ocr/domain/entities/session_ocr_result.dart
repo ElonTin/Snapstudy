@@ -11,6 +11,7 @@ class SessionOcrResult extends Equatable {
     required this.keywords,
     required this.averageConfidence,
     required this.hasEquations,
+    this.latexEquations = const [],
     required this.status,
     required this.processedAt,
     this.suggestedSubjectId,
@@ -28,6 +29,7 @@ class SessionOcrResult extends Equatable {
   final double suggestedSubjectConfidence;
   final double averageConfidence;
   final bool hasEquations;
+  final List<String> latexEquations;
   final OcrStatus status;
   final DateTime processedAt;
   final String? errorMessage;
@@ -45,6 +47,7 @@ class SessionOcrResult extends Equatable {
         suggestedSubjectConfidence,
         averageConfidence,
         hasEquations,
+        latexEquations,
         status,
         processedAt,
         errorMessage,

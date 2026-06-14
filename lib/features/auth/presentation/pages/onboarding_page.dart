@@ -66,7 +66,10 @@ class OnboardingPage extends HookConsumerWidget {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: finish,
-                child: const Text('Bỏ qua'),
+                child: Text(
+                  'Bỏ qua',
+                  style: TextStyle(color: colors.onSurfaceVariant),
+                ),
               ),
             ),
             Expanded(
@@ -77,25 +80,39 @@ class OnboardingPage extends HookConsumerWidget {
                 itemBuilder: (context, index) {
                   final slide = _slides[index];
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 36),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          width: 120,
-                          height: 120,
+                          width: 128,
+                          height: 128,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                               colors: [
-                                AppColors.aiGradientStart,
-                                AppColors.aiGradientEnd,
+                                colors.primaryContainer,
+                                colors.secondaryContainer,
                               ],
                             ),
-                            borderRadius: BorderRadius.circular(32),
+                            borderRadius:
+                                BorderRadius.circular(AppConstants.largeRadius),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.shadowLight,
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
                           ),
-                          child: Icon(slide.icon, size: 56, color: Colors.white),
+                          child: Icon(
+                            slide.icon,
+                            size: 56,
+                            color: colors.primary,
+                          ),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 44),
                         Text(
                           slide.title,
                           textAlign: TextAlign.center,
@@ -107,6 +124,7 @@ class OnboardingPage extends HookConsumerWidget {
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                 color: colors.onSurfaceVariant,
+                                height: 1.6,
                               ),
                         ),
                       ],
@@ -122,10 +140,10 @@ class OnboardingPage extends HookConsumerWidget {
                 return AnimatedContainer(
                   duration: AppConstants.animationDuration,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: active ? 24 : 8,
+                  width: active ? 28 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: active ? colors.primary : colors.outlineVariant,
+                    color: active ? colors.secondary : colors.outlineVariant,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 );
@@ -139,6 +157,7 @@ class OnboardingPage extends HookConsumerWidget {
                     ? 'Bắt đầu'
                     : 'Tiếp theo',
                 expand: true,
+                size: AppButtonSize.large,
                 onPressed: () {
                   if (currentPage.value < _slides.length - 1) {
                     pageController.nextPage(

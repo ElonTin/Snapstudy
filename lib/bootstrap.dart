@@ -35,6 +35,6 @@ Future<void> bootstrap() async {
     ),
   );
 
-  // Non-blocking — must not delay runApp / first frame.
-  unawaited(FirebaseService.init());
+  // Warm-up Firebase without blocking first frame.
+  unawaited(FirebaseService.ensureInitialized());
 }

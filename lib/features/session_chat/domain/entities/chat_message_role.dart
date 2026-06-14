@@ -1,0 +1,1 @@
+enum ChatMessageRole { user, assistant }

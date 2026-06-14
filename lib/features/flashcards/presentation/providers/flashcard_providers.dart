@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:snapstudy/core/env/env_config.dart';
-import 'package:snapstudy/features/ai_summary/presentation/providers/gemini_providers.dart';
+import 'package:snapstudy/features/ai/presentation/providers/llm_providers.dart';
 import 'package:snapstudy/features/flashcards/data/repositories/flashcard_repository_impl.dart';
 import 'package:snapstudy/features/flashcards/domain/entities/session_flashcard_deck.dart';
 import 'package:snapstudy/features/flashcards/domain/repositories/flashcard_repository.dart';
@@ -13,7 +13,7 @@ final useMockFlashcardsProvider =
 final flashcardRepositoryProvider = Provider<FlashcardRepository>((ref) {
   return FlashcardRepositoryImpl(
     sessions: ref.watch(sessionRepositoryProvider),
-    gemini: ref.watch(geminiApiClientProvider),
+    llm: ref.watch(textLlmClientProvider),
   );
 });
 

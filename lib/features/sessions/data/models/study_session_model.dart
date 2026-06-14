@@ -139,6 +139,9 @@ class StudySessionModel {
       };
 
   StudySessionModel copyWith({
+    String? subjectId,
+    String? subjectName,
+    int? subjectColorValue,
     String? title,
     String? notes,
     List<String>? tags,
@@ -160,9 +163,9 @@ class StudySessionModel {
   }) {
     return StudySessionModel(
       id: id,
-      subjectId: subjectId,
-      subjectName: subjectName,
-      subjectColorValue: subjectColorValue,
+      subjectId: subjectId ?? this.subjectId,
+      subjectName: subjectName ?? this.subjectName,
+      subjectColorValue: subjectColorValue ?? this.subjectColorValue,
       title: title ?? this.title,
       notes: notes ?? this.notes,
       tags: tags ?? this.tags,

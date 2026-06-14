@@ -19,9 +19,13 @@ import 'package:snapstudy/features/mindmap/presentation/pages/mindmap_view_page.
 import 'package:snapstudy/features/quiz/presentation/pages/quiz_play_page.dart';
 import 'package:snapstudy/features/spaced_repetition/presentation/pages/review_queue_page.dart';
 import 'package:snapstudy/features/sessions/presentation/pages/session_detail_page.dart';
+import 'package:snapstudy/features/sessions/presentation/pages/gallery_import_page.dart';
+import 'package:snapstudy/features/sessions/presentation/pages/ingest_progress_page.dart';
+import 'package:snapstudy/features/sessions/presentation/pages/sessions_history_page.dart';
 import 'package:snapstudy/features/sessions/presentation/pages/start_session_page.dart';
 import 'package:snapstudy/features/subjects/presentation/pages/subject_form_page.dart';
 import 'package:snapstudy/features/subjects/presentation/pages/subjects_list_page.dart';
+import 'package:snapstudy/features/weak_areas/presentation/pages/weak_areas_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -153,6 +157,30 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ActiveSessionPage(),
       ),
       GoRoute(
+        path: RoutePaths.galleryImport,
+        name: RouteNames.galleryImport,
+        builder: (context, state) => const GalleryImportPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.sessionsHistory,
+        name: RouteNames.sessionsHistory,
+        builder: (context, state) => const SessionsHistoryPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.ingestProgress,
+        name: RouteNames.ingestProgress,
+        builder: (context, state) {
+          final sessionId = state.uri.queryParameters['sessionId'];
+          final paths = state.extra is List<String>
+              ? state.extra! as List<String>
+              : <String>[];
+          return IngestProgressPage(
+            sessionId: sessionId,
+            imagePaths: paths,
+          );
+        },
+      ),
+      GoRoute(
         path: RoutePaths.cameraCapture,
         name: RouteNames.cameraCapture,
         builder: (context, state) {
@@ -177,6 +205,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: RouteNames.flashcardStudy,
             builder: (context, state) => FlashcardStudyPage(
               sessionId: state.pathParameters['id']!,
+              weakOnly: state.uri.queryParameters['weakOnly'] == 'true',
             ),
           ),
           GoRoute(
@@ -190,6 +219,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'mindmap',
             name: RouteNames.mindmapView,
             builder: (context, state) => MindmapViewPage(
+              sessionId: state.pathParameters['id']!,
+            ),
+          ),
+          GoRoute(
+            path: 'weak-areas',
+            name: RouteNames.weakAreas,
+            builder: (context, state) => WeakAreasPage(
               sessionId: state.pathParameters['id']!,
             ),
           ),

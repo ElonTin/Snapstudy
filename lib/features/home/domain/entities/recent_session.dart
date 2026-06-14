@@ -8,6 +8,7 @@ class RecentSession extends Equatable {
     required this.id,
     required this.title,
     required this.subjectName,
+    required this.subtitle,
     required this.subjectColorValue,
     required this.photoCount,
     required this.startedAt,
@@ -18,6 +19,8 @@ class RecentSession extends Equatable {
   final String id;
   final String title;
   final String subjectName;
+  /// Chủ đề / dạng bài cụ thể (vd. Toán xác suất · biến cố).
+  final String subtitle;
   final int subjectColorValue;
   final int photoCount;
   final DateTime startedAt;
@@ -29,6 +32,7 @@ class RecentSession extends Equatable {
         id,
         title,
         subjectName,
+        subtitle,
         subjectColorValue,
         photoCount,
         startedAt,

@@ -28,6 +28,7 @@ ${GeminiTokenLimits.truncate(ocr.fullText, GeminiTokenLimits.maxInputOcrChars(Ge
 Trả về ĐÚNG MỘT JSON (không markdown, không giải thích) theo schema:
 {
   "detectedTopic": "string — chủ đề chính 1 câu",
+  "shortSummary": "string — ĐÚNG 3-5 dòng ngắn (mỗi dòng 1 câu, phân cách bằng \\n), nắm linh hồn bài học",
   "overview": "string — tóm tắt 2-3 câu ngắn",
   "keyPoints": ["string — 3-5 ý quan trọng"],
   "bulletSummary": ["string — 4-6 gạch đầu dòng ngắn"],

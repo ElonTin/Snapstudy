@@ -71,7 +71,7 @@ class StudySession extends Equatable {
 
   Duration get elapsed {
     var ms = accumulatedElapsedMs;
-    if (isActive && timerRunningSince != null) {
+    if (timerRunningSince != null) {
       ms += DateTime.now().difference(timerRunningSince!).inMilliseconds;
     } else if (endedAt != null && accumulatedElapsedMs == 0) {
       return endedAt!.difference(startedAt);
@@ -79,7 +79,7 @@ class StudySession extends Equatable {
     return Duration(milliseconds: ms);
   }
 
-  bool get isTimerRunning => isActive && timerRunningSince != null;
+  bool get isTimerRunning => timerRunningSince != null;
 
   bool get isActive => status == SessionStatus.active;
 

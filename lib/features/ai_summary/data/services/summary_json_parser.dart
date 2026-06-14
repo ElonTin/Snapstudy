@@ -34,6 +34,11 @@ abstract final class SummaryJsonParser {
       final overview = _requireString(decoded, 'overview');
       if (overview.isFailure) return Error(overview.failureOrNull!);
 
+      final shortSummaryRaw = decoded['shortSummary'];
+      final shortSummary = shortSummaryRaw is String && shortSummaryRaw.trim().isNotEmpty
+          ? shortSummaryRaw.trim()
+          : overview.valueOrNull!;
+
       final keyPoints = _requireStringList(decoded, 'keyPoints', min: 1, max: 12);
       if (keyPoints.isFailure) return Error(keyPoints.failureOrNull!);
 
@@ -48,6 +53,7 @@ abstract final class SummaryJsonParser {
         SessionAiSummary(
           sessionId: sessionId,
           detectedTopic: topic.valueOrNull!,
+          shortSummary: shortSummary,
           overview: overview.valueOrNull!,
           keyPoints: keyPoints.valueOrNull!,
           bulletSummary: bullets.valueOrNull!,

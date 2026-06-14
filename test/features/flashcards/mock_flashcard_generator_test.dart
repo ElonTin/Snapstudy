@@ -20,6 +20,7 @@ void main() {
     final summary = SessionAiSummary(
       sessionId: 's1',
       detectedTopic: 'Đạo hàm',
+      shortSummary: 'Tóm tắt nhanh 3 dòng.',
       overview: 'Tóm tắt',
       keyPoints: const ['Đạo hàm', 'Cực trị'],
       bulletSummary: const ['a'],

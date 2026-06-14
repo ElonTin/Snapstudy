@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/notifications/notification_payload.dart';
+import 'package:snapstudy/core/widgets/app_button.dart';
+import 'package:snapstudy/core/widgets/app_empty_state.dart';
 import 'package:snapstudy/core/widgets/app_loading.dart';
+import 'package:snapstudy/core/widgets/app_scaffold.dart';
 import 'package:snapstudy/features/home/presentation/utils/dashboard_formatters.dart';
 import 'package:snapstudy/features/notifications/domain/entities/notification_record.dart';
 import 'package:snapstudy/features/notifications/domain/entities/notification_source.dart';
@@ -20,7 +23,9 @@ class NotificationHistoryPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Hộp thông báo'),
         actions: [
-          TextButton(
+          AppButton(
+            label: 'Đọc hết',
+            variant: AppButtonVariant.text,
             onPressed: () async {
               await ref
                   .read(notificationRepositoryProvider)
@@ -28,7 +33,6 @@ class NotificationHistoryPage extends ConsumerWidget {
               ref.invalidate(notificationHistoryProvider);
               ref.invalidate(unreadNotificationCountProvider);
             },
-            child: const Text('Đọc hết'),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline),
@@ -64,19 +68,21 @@ class NotificationHistoryPage extends ConsumerWidget {
         ],
       ),
       body: historyAsync.when(
-        loading: () => const AppLoading(fullScreen: true),
+        loading: () => const AppLoading(fullScreen: true, useSkeleton: true),
         error: (e, _) => Center(child: Text('$e')),
         data: (items) {
           if (items.isEmpty) {
-            return const Center(
-              child: Text('Chưa có thông báo nào được lưu.'),
+            return const AppEmptyState(
+              icon: Icons.notifications_none_outlined,
+              title: 'Chưa có thông báo',
+              subtitle: 'Thông báo push và nhắc local sẽ hiện ở đây.',
             );
           }
 
           return ListView.separated(
             padding: const EdgeInsets.all(AppConstants.defaultPadding),
             itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final item = items[index];
               return _HistoryTile(
@@ -137,68 +143,73 @@ class _HistoryTile extends StatelessWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        color: colors.errorContainer,
+        decoration: BoxDecoration(
+          color: colors.errorContainer,
+          borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+        ),
         child: Icon(Icons.delete, color: colors.onErrorContainer),
       ),
-      child: Material(
+      child: AppCard(
+        onTap: onTap,
         color: record.isRead
-            ? colors.surfaceContainerHighest
+            ? null
             : colors.primaryContainer.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(_iconForSource(record.source), color: colors.primary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        record.title,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleSmall
-                            ?.copyWith(
-                              fontWeight: record.isRead
-                                  ? FontWeight.w500
-                                  : FontWeight.w700,
-                            ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        record.body,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${_sourceLabel(record.source)} · ${DashboardFormatters.relativeTime(record.receivedAt)}',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: colors.onSurfaceVariant,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (!record.isRead)
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: colors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-              ],
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(_iconForSource(record.source), color: colors.primary),
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    record.title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: record.isRead
+                              ? FontWeight.w500
+                              : FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    record.body,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${_sourceLabel(record.source)} · ${DashboardFormatters.relativeTime(record.receivedAt)}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            if (!record.isRead)
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(top: 4),
+                decoration: BoxDecoration(
+                  color: colors.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+          ],
         ),
       ),
     );

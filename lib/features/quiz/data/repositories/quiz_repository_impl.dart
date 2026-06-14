@@ -1,7 +1,7 @@
 import 'package:snapstudy/core/env/env_config.dart';
 import 'package:snapstudy/core/errors/failures.dart';
 import 'package:snapstudy/core/utils/result.dart';
-import 'package:snapstudy/features/ai_summary/data/services/gemini_api_client.dart';
+import 'package:snapstudy/features/ai/data/services/llm_json_client.dart';
 import 'package:snapstudy/features/ai_summary/data/services/gemini_token_limits.dart';
 import 'package:snapstudy/features/quiz/data/services/mock_quiz_generator.dart';
 import 'package:snapstudy/features/quiz/data/services/quiz_json_parser.dart';
@@ -15,12 +15,12 @@ import 'package:snapstudy/features/sessions/domain/repositories/session_reposito
 class QuizRepositoryImpl implements QuizRepository {
   QuizRepositoryImpl({
     required SessionRepository sessions,
-    required GeminiApiClient gemini,
+    required LlmJsonClient llm,
   })  : _sessions = sessions,
-        _gemini = gemini;
+        _llm = llm;
 
   final SessionRepository _sessions;
-  final GeminiApiClient _gemini;
+  final LlmJsonClient _llm;
 
   @override
   Future<Result<SessionQuiz>> generateAndSave({
@@ -49,7 +49,7 @@ class QuizRepositoryImpl implements QuizRepository {
         summary: session.aiSummary,
         deck: session.flashcardDeck,
       );
-      final raw = await _gemini.generateJson(
+      final raw = await _llm.generateJson(
         prompt: prompt,
         feature: GeminiAiFeature.quiz,
       );
@@ -57,7 +57,7 @@ class QuizRepositoryImpl implements QuizRepository {
         return QuizJsonParser.parse(
           sessionId: session.id,
           rawJson: jsonText,
-          modelName: EnvConfig.geminiModel,
+          modelName: EnvConfig.activeTextLlmModel,
         );
       });
     }

@@ -10,6 +10,7 @@ import 'package:snapstudy/features/notifications/data/services/notification_sche
 import 'package:snapstudy/features/notifications/domain/entities/notification_preferences.dart';
 import 'package:snapstudy/features/notifications/domain/entities/notification_record.dart';
 import 'package:snapstudy/features/notifications/domain/entities/notification_source.dart';
+import 'package:snapstudy/features/notifications/domain/entities/card_review_reminder.dart';
 import 'package:snapstudy/features/notifications/domain/entities/notification_sync_snapshot.dart';
 import 'package:snapstudy/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:snapstudy/features/sessions/domain/entities/session_status.dart';
@@ -159,6 +160,12 @@ class NotificationRepositoryImpl implements NotificationRepository {
       onFailure: (_) {},
     );
 
+    final upcomingResult = await _sr.getUpcomingCardReminders();
+    final upcoming = upcomingResult.fold(
+      onSuccess: (list) => list,
+      onFailure: (_) => const <CardReviewReminder>[],
+    );
+
     return NotificationSyncSnapshot(
       dueCards: stats?.dueNow ?? 0,
       overdueCards: stats?.overdue ?? 0,
@@ -166,6 +173,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
       reviewedToday: stats?.reviewedToday ?? 0,
       hasActiveSession: active != null,
       pendingSessionCount: pending,
+      upcomingCardReminders: upcoming,
     );
   }
 

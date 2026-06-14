@@ -1,10 +1,11 @@
 import 'package:snapstudy/core/env/env_config.dart';
 import 'package:snapstudy/core/errors/failures.dart';
 import 'package:snapstudy/core/utils/result.dart';
-import 'package:snapstudy/features/ai_summary/data/services/gemini_api_client.dart';
+import 'package:snapstudy/features/ai/data/services/llm_json_client.dart';
 import 'package:snapstudy/features/ai_summary/data/services/gemini_token_limits.dart';
 import 'package:snapstudy/features/mindmap/data/services/mindmap_json_parser.dart';
 import 'package:snapstudy/features/mindmap/data/services/mindmap_prompt_builder.dart';
+import 'package:snapstudy/features/mindmap/data/services/mindmap_compact_utils.dart';
 import 'package:snapstudy/features/mindmap/data/services/mock_mindmap_generator.dart';
 import 'package:snapstudy/features/mindmap/domain/entities/session_mindmap.dart';
 import 'package:snapstudy/features/mindmap/domain/repositories/mindmap_repository.dart';
@@ -14,12 +15,12 @@ import 'package:snapstudy/features/sessions/domain/repositories/session_reposito
 class MindmapRepositoryImpl implements MindmapRepository {
   MindmapRepositoryImpl({
     required SessionRepository sessions,
-    required GeminiApiClient gemini,
+    required LlmJsonClient llm,
   })  : _sessions = sessions,
-        _gemini = gemini;
+        _llm = llm;
 
   final SessionRepository _sessions;
-  final GeminiApiClient _gemini;
+  final LlmJsonClient _llm;
 
   @override
   Future<Result<SessionMindmap>> generateAndSave({
@@ -35,9 +36,11 @@ class MindmapRepositoryImpl implements MindmapRepository {
     final Result<SessionMindmap> generated;
     if (EnvConfig.useMockMindmap) {
       generated = Success(
-        MockMindmapGenerator.generate(
-          session: session,
-          summary: session.aiSummary,
+        MindmapCompactUtils.compact(
+          MockMindmapGenerator.generate(
+            session: session,
+            summary: session.aiSummary,
+          ),
         ),
       );
     } else {
@@ -48,7 +51,7 @@ class MindmapRepositoryImpl implements MindmapRepository {
         deck: session.flashcardDeck,
         quiz: session.sessionQuiz,
       );
-      final raw = await _gemini.generateJson(
+      final raw = await _llm.generateJson(
         prompt: prompt,
         feature: GeminiAiFeature.mindmap,
       );
@@ -56,7 +59,7 @@ class MindmapRepositoryImpl implements MindmapRepository {
         return MindmapJsonParser.parse(
           sessionId: session.id,
           rawJson: jsonText,
-          modelName: EnvConfig.geminiModel,
+          modelName: EnvConfig.activeTextLlmModel,
         );
       });
     }

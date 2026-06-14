@@ -2,17 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
+import 'dart:async';
+
+import 'package:snapstudy/features/sessions/presentation/providers/session_pipeline_provider.dart';
 import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/routing/route_paths.dart';
 import 'package:snapstudy/core/theme/app_colors.dart';
 import 'package:snapstudy/core/utils/extensions.dart';
 import 'package:snapstudy/core/widgets/app_button.dart';
 import 'package:snapstudy/core/widgets/app_loading.dart';
+import 'package:snapstudy/core/widgets/app_scaffold.dart';
 import 'package:snapstudy/features/camera/presentation/providers/camera_providers.dart';
 import 'package:snapstudy/features/camera/presentation/utils/camera_navigation.dart';
 import 'package:snapstudy/features/sessions/presentation/providers/session_providers.dart';
 import 'package:snapstudy/features/sessions/presentation/utils/session_formatters.dart';
+import 'package:snapstudy/features/sessions/presentation/widgets/capture_image_viewer.dart';
 import 'package:snapstudy/features/sessions/presentation/widgets/capture_queue_grid.dart';
 
 /// Active session — timer, queue, native camera capture (Phase 6).
@@ -36,7 +40,6 @@ class ActiveSessionPage extends HookConsumerWidget {
       orElse: () => null,
     );
     final isEnding = useState(false);
-    final picker = useMemoized(ImagePicker.new);
 
     Future<void> addFromGallery() async {
       final granted =
@@ -48,19 +51,19 @@ class ActiveSessionPage extends HookConsumerWidget {
         return;
       }
 
-      final file = await picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 90,
-      );
-      if (file == null) return;
+      final paths =
+          await ref.read(galleryImportServiceProvider).pickMultiple();
+      if (paths.isEmpty) return;
 
-      final ok = await ref
+      final added = await ref
           .read(activeSessionProvider.notifier)
-          .addCapture(file.path, processImage: true);
+          .addCaptures(paths, processImages: true);
       if (context.mounted) {
         context.showSnack(
-          ok ? 'Đã thêm vào hàng đợi' : 'Thêm ảnh thất bại — thử chọn ảnh khác',
-          isError: !ok,
+          added > 0
+              ? 'Đã thêm $added ảnh vào hàng đợi'
+              : 'Thêm ảnh thất bại — thử chọn ảnh khác',
+          isError: added == 0,
         );
       }
     }
@@ -93,8 +96,8 @@ class ActiveSessionPage extends HookConsumerWidget {
         builder: (ctx) => AlertDialog(
           title: const Text('Kết thúc buổi học?'),
           content: const Text(
-            'Ảnh sẽ được OCR, tóm tắt, flashcard, quiz và mindmap tự động. '
-            'Bạn sẽ được chuyển tới trang chi tiết buổi học.',
+            'Ảnh sẽ được OCR và tóm tắt AI tự động. '
+            'Flashcard, quiz và mindmap tạo thủ công khi bạn cần.',
           ),
           actions: [
             TextButton(
@@ -120,6 +123,9 @@ class ActiveSessionPage extends HookConsumerWidget {
           context.go(RoutePaths.home);
           context.showSnack('Buổi học đã kết thúc');
         } else {
+          unawaited(
+            ref.read(sessionPipelineProvider.notifier).runIfNeeded(session.id),
+          );
           context.go(RoutePaths.sessionDetailPath(session.id));
           context.showSnack(
             'Đang xử lý OCR và AI — theo dõi tiến trình bên dưới',
@@ -162,6 +168,7 @@ class ActiveSessionPage extends HookConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Buổi học đang diễn ra'),
+        scrolledUnderElevation: 1,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.go(RoutePaths.home),
@@ -169,7 +176,10 @@ class ActiveSessionPage extends HookConsumerWidget {
         actions: [
           TextButton(
             onPressed: cancelSession,
-            child: const Text('Huỷ'),
+            child: Text(
+              'Huỷ',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ),
         ],
       ),
@@ -191,12 +201,25 @@ class ActiveSessionPage extends HookConsumerWidget {
               Container(
                 width: double.infinity,
                 margin: const EdgeInsets.all(AppConstants.defaultPadding),
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [AppColors.aiGradientStart, AppColors.aiGradientEnd],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.aiGradientStart,
+                      AppColors.aiGradientEnd,
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius:
+                      BorderRadius.circular(AppConstants.defaultRadius),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.shadowLight,
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
@@ -282,29 +305,31 @@ class ActiveSessionPage extends HookConsumerWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Text(
-                      'Hàng đợi chụp (${session.photoCount})',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const Spacer(),
-                    TextButton.icon(
-                      onPressed: addFromGallery,
-                      icon: const Icon(Icons.photo_library_outlined),
-                      label: const Text('Thư viện'),
-                    ),
-                  ],
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppConstants.defaultPadding,
+                ),
+                child: AppSectionHeader(
+                  title: 'Hàng đợi chụp (${session.photoCount})',
+                  trailing: AppButton(
+                    label: 'Thư viện',
+                    icon: Icons.photo_library_outlined,
+                    variant: AppButtonVariant.text,
+                    onPressed: addFromGallery,
+                  ),
                 ),
               ),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppConstants.defaultPadding),
                   children: [
                     CaptureQueueGrid(
                       items: session.queue,
                       onAddTap: openCamera,
+                      onImageTap: (item, index) => CaptureImageViewer.show(
+                        context,
+                        items: session.queue,
+                        initialIndex: index,
+                      ),
                       onRemove: (item) async {
                         final ok = await ref
                             .read(activeSessionProvider.notifier)
@@ -315,14 +340,17 @@ class ActiveSessionPage extends HookConsumerWidget {
                       },
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      'Ảnh tự nén + tiền xử lý → OCR sau khi kết thúc buổi.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                          ),
+                    AppCard(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        'Ảnh được lưu gốc (nén nhẹ) → OCR sau khi kết thúc buổi.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                      ),
                     ),
                   ],
                 ),

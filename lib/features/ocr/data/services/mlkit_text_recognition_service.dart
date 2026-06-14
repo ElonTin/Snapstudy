@@ -36,7 +36,7 @@ class MlKitTextRecognitionService implements TextRecognitionService {
       final input = InputImage.fromFilePath(imagePath);
       final recognized = await _recognizer.processImage(input);
       final blocks = _mapBlocks(recognized);
-      final text = recognized.text.trim();
+      final text = _textFromBlocks(blocks, recognized.text.trim());
       final confidence = _estimateConfidence(blocks, text);
       final hasEquations = EquationDetector.containsEquations(text);
 
@@ -61,6 +61,15 @@ class MlKitTextRecognitionService implements TextRecognitionService {
         errorMessage: e.toString(),
       );
     }
+  }
+
+  String _textFromBlocks(List<OcrTextBlock> blocks, String fallback) {
+    if (blocks.isEmpty) return fallback;
+    final fromBlocks = blocks
+        .map((b) => b.lines.map((l) => l.text).join('\n'))
+        .where((p) => p.trim().isNotEmpty)
+        .join('\n\n');
+    return fromBlocks.isNotEmpty ? fromBlocks : fallback;
   }
 
   List<OcrTextBlock> _mapBlocks(RecognizedText recognized) {

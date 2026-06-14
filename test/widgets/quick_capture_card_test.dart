@@ -8,21 +8,45 @@ void main() {
     await initTestEnvironment();
   });
 
-  testWidgets('tap invokes onCapture callback', (tester) async {
-    var tapped = false;
+  testWidgets('tap Chụp bài invokes onCapture', (tester) async {
+    var captureTapped = false;
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: QuickCaptureCard(onCapture: () => tapped = true),
+          body: QuickCaptureCard(
+            onCapture: () => captureTapped = true,
+            onGalleryImport: () {},
+          ),
         ),
       ),
     );
 
-    expect(find.text('Bắt đầu chụp'), findsOneWidget);
-    await tester.tap(find.text('Bắt đầu chụp'));
+    expect(find.text('Chụp bài'), findsOneWidget);
+    await tester.tap(find.text('Chụp bài'));
     await tester.pump();
 
-    expect(tapped, isTrue);
+    expect(captureTapped, isTrue);
+  });
+
+  testWidgets('tap Import ảnh invokes onGalleryImport', (tester) async {
+    var galleryTapped = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: QuickCaptureCard(
+            onCapture: () {},
+            onGalleryImport: () => galleryTapped = true,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Import ảnh'), findsOneWidget);
+    await tester.tap(find.text('Import ảnh'));
+    await tester.pump();
+
+    expect(galleryTapped, isTrue);
   });
 }

@@ -9,11 +9,13 @@ class CaptureQueueGrid extends StatelessWidget {
     required this.items,
     this.onRemove,
     this.onAddTap,
+    this.onImageTap,
   });
 
   final List<CaptureQueueItem> items;
   final void Function(CaptureQueueItem item)? onRemove;
   final VoidCallback? onAddTap;
+  final void Function(CaptureQueueItem item, int index)? onImageTap;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +38,7 @@ class CaptureQueueGrid extends StatelessWidget {
         final item = items[index];
         return _CaptureCell(
           item: item,
+          onTap: onImageTap != null ? () => onImageTap!(item, index) : null,
           onRemove: onRemove != null ? () => onRemove!(item) : null,
         );
       },
@@ -75,9 +78,10 @@ class _AddCell extends StatelessWidget {
 }
 
 class _CaptureCell extends StatelessWidget {
-  const _CaptureCell({required this.item, this.onRemove});
+  const _CaptureCell({required this.item, this.onTap, this.onRemove});
 
   final CaptureQueueItem item;
+  final VoidCallback? onTap;
   final VoidCallback? onRemove;
 
   @override
@@ -85,10 +89,17 @@ class _CaptureCell extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        CachedFileImage(
-          path: item.localPath,
-          fit: BoxFit.cover,
-          borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+            child: CachedFileImage(
+              path: item.thumbnailPath ?? item.localPath,
+              fit: BoxFit.cover,
+              borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+            ),
+          ),
         ),
         if (onRemove != null)
           Positioned(

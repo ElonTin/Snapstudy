@@ -10,7 +10,7 @@ void main() {
   });
 
   test('compression settings are production defaults', () {
-    expect(CameraConstants.compressMaxEdge, 1920);
+    expect(CameraConstants.compressMaxEdge, 3200);
     expect(CameraConstants.compressQuality, inInclusiveRange(1, 100));
   });
 }

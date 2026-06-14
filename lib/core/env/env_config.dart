@@ -31,9 +31,13 @@ class EnvConfig {
     return value.trim();
   }
 
-  /// Phase 7 — OpenCV preprocessing before OCR (Phase 8).
+  /// Tiền xử lý nhẹ trước OCR (tắt mặc định — ảnh gốc OCR tốt hơn trên điện thoại).
   static bool get enablePreprocessing =>
-      (dotenv.env['ENABLE_PREPROCESSING'] ?? 'true').toLowerCase() == 'true';
+      (dotenv.env['ENABLE_PREPROCESSING'] ?? 'false').toLowerCase() == 'true';
+
+  /// Sau OCR: LLM sắp xếp bố cục + chuyển công thức sang LaTeX.
+  static bool get enableOcrEnhancement =>
+      (dotenv.env['ENABLE_OCR_ENHANCEMENT'] ?? 'true').toLowerCase() == 'true';
 
   /// Phase 8 — allow mock OCR on desktop (Windows tests). Ignored on Android/iOS.
   static bool get ocrDevMode =>
@@ -65,6 +69,30 @@ class EnvConfig {
   static bool get isGeminiConfigured =>
       geminiApiKey != null && geminiApiKey!.isNotEmpty;
 
+  /// Groq — LLM text nhanh (tóm tắt, phân loại, flashcard, quiz, mindmap).
+  static String get groqBaseUrl =>
+      dotenv.env['GROQ_BASE_URL'] ?? 'https://api.groq.com/openai/v1';
+
+  static String get groqModel =>
+      dotenv.env['GROQ_MODEL'] ?? 'llama-3.3-70b-versatile';
+
+  static String? get groqApiKey {
+    final value = dotenv.env['GROQ_API_KEY'];
+    if (value == null || value.trim().isEmpty) return null;
+    return value.trim();
+  }
+
+  static bool get isGroqConfigured =>
+      groqApiKey != null && groqApiKey!.isNotEmpty;
+
+  /// Có ít nhất một LLM text (Groq hoặc Gemini).
+  static bool get isTextLlmConfigured =>
+      isGroqConfigured || isGeminiConfigured;
+
+  /// Model name ghi vào metadata khi dùng LLM text.
+  static String get activeTextLlmModel =>
+      isGroqConfigured ? groqModel : geminiModel;
+
   static bool _flag(String key, {bool defaultValue = false}) =>
       (dotenv.env[key] ?? defaultValue.toString()).toLowerCase() == 'true';
 
@@ -75,7 +103,7 @@ class EnvConfig {
 
   /// Mock when no API key, or [AI_SUMMARY_FORCE_MOCK]=true. Key present → Gemini.
   static bool get useMockAiSummary =>
-      !isGeminiConfigured || aiSummaryForceMock;
+      !isTextLlmConfigured || aiSummaryForceMock;
 
   /// Phase 10 — flashcard generation (shares Gemini key with summary).
   static bool get flashcardsDevMode => _flag('FLASHCARDS_DEV_MODE');
@@ -83,14 +111,14 @@ class EnvConfig {
   static bool get flashcardsForceMock => _flag('FLASHCARDS_FORCE_MOCK');
 
   static bool get useMockFlashcards =>
-      !isGeminiConfigured || flashcardsForceMock;
+      !isTextLlmConfigured || flashcardsForceMock;
 
   /// Phase 12 — MCQ quiz generation (shares Gemini key).
   static bool get quizDevMode => _flag('QUIZ_DEV_MODE');
 
   static bool get quizForceMock => _flag('QUIZ_FORCE_MOCK');
 
-  static bool get useMockQuiz => !isGeminiConfigured || quizForceMock;
+  static bool get useMockQuiz => !isTextLlmConfigured || quizForceMock;
 
   /// Phase 13 — knowledge mindmap graph.
   static bool get mindmapDevMode => _flag('MINDMAP_DEV_MODE');
@@ -98,7 +126,7 @@ class EnvConfig {
   static bool get mindmapForceMock => _flag('MINDMAP_FORCE_MOCK');
 
   static bool get useMockMindmap =>
-      !isGeminiConfigured || mindmapForceMock;
+      !isTextLlmConfigured || mindmapForceMock;
 
   /// Phase 14 — push via FCM when Firebase is configured.
   static bool get enableFcm =>

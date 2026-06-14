@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1009954961371-9hos3sv1omagndqs3p0in7thtjntohck.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.snapstudy.snapstudy",
+            "certificate_hash": "5abcedc5824092a0a5772d9cfffdb90f1272d29d"
+          }
+        },
+        {
           "client_id": "1009954961371-udvvgkhf5efbv9tsuk8od05980m48gjr.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

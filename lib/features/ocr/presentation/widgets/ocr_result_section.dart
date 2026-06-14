@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/theme/app_colors.dart';
+import 'package:snapstudy/core/widgets/latex_text_widget.dart';
+import 'package:snapstudy/core/utils/extensions.dart';
 import 'package:snapstudy/features/ocr/domain/entities/ocr_status.dart';
 import 'package:snapstudy/features/ocr/domain/entities/session_ocr_result.dart';
 import 'package:snapstudy/features/ocr/presentation/providers/ocr_providers.dart';
+import 'package:snapstudy/features/ocr/presentation/widgets/ocr_rich_text_widget.dart';
+import 'package:snapstudy/core/widgets/app_button.dart';
+import 'package:snapstudy/core/widgets/app_scaffold.dart';
 
 class OcrResultSection extends ConsumerWidget {
   const OcrResultSection({
@@ -12,11 +18,15 @@ class OcrResultSection extends ConsumerWidget {
     required this.ocr,
     this.onReprocess,
     this.isReprocessing = false,
+    this.onApplySuggestedSubject,
+    this.canApplySuggestedSubject = false,
   });
 
   final SessionOcrResult ocr;
   final VoidCallback? onReprocess;
   final bool isReprocessing;
+  final VoidCallback? onApplySuggestedSubject;
+  final bool canApplySuggestedSubject;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,29 +35,31 @@ class OcrResultSection extends ConsumerWidget {
     final looksLikeOldMock = ocr.fullText.contains('Chương 3: Đạo hàm') ||
         ocr.fullText.contains('DỮ LIỆU MẪU');
 
-    return Card(
-      elevation: 0,
-      color: colors.surfaceContainerHighest,
-      child: Padding(
-        padding: const EdgeInsets.all(AppConstants.defaultPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppSectionHeader(
+            title: 'Văn bản nhận dạng (OCR)',
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.document_scanner_outlined,
-                    color: AppColors.aiGradientStart),
-                const SizedBox(width: 8),
-                Text(
-                  'Văn bản nhận dạng (OCR)',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                IconButton(
+                  icon: const Icon(Icons.copy_outlined, size: 20),
+                  tooltip: 'Sao chép văn bản OCR',
+                  onPressed: ocr.fullText.trim().isEmpty
+                      ? null
+                      : () {
+                          Clipboard.setData(
+                            ClipboardData(text: ocr.fullText),
+                          );
+                          context.showSnack('Đã sao chép văn bản OCR');
+                        },
                 ),
-                const Spacer(),
                 _ConfidenceChip(confidence: ocr.averageConfidence),
               ],
             ),
+          ),
             const SizedBox(height: 8),
             Text(
               _statusLabel(ocr.status),
@@ -98,6 +110,39 @@ class OcrResultSection extends ConsumerWidget {
                 ),
                 dense: true,
               ),
+              if (canApplySuggestedSubject && onApplySuggestedSubject != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppButton(
+                    label: 'Áp dụng môn «${ocr.suggestedSubjectName}»',
+                    icon: Icons.check,
+                    variant: AppButtonVariant.secondary,
+                    onPressed: onApplySuggestedSubject,
+                  ),
+                ),
+            ],
+            if (ocr.latexEquations.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text('Công thức (LaTeX)', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              ...ocr.latexEquations.take(8).map(
+                    (eq) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: colors.surface,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: colors.outlineVariant),
+                        ),
+                        child: LatexTextWidget(
+                          latex: eq,
+                          onCopy: () => context.showSnack('Đã sao chép LaTeX'),
+                        ),
+                      ),
+                    ),
+                  ),
             ],
             if (ocr.keywords.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -127,33 +172,29 @@ class OcrResultSection extends ConsumerWidget {
               ),
               constraints: const BoxConstraints(maxHeight: 220),
               child: SingleChildScrollView(
-                child: Text(
-                  ocr.fullText.isEmpty
-                      ? 'Không trích xuất được văn bản.'
-                      : ocr.fullText,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        height: 1.45,
+                child: ocr.fullText.isEmpty
+                    ? Text(
+                        'Không trích xuất được văn bản.',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      )
+                    : OcrRichTextWidget(
+                        text: ocr.fullText,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                ),
               ),
             ),
             if (onReprocess != null) ...[
               const SizedBox(height: 12),
-              OutlinedButton.icon(
+              AppButton(
+                label: isReprocessing ? 'Đang OCR...' : 'Chạy lại OCR',
+                icon: Icons.refresh,
+                variant: AppButtonVariant.outline,
+                isLoading: isReprocessing,
                 onPressed: isReprocessing ? null : onReprocess,
-                icon: isReprocessing
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh),
-                label: Text(isReprocessing ? 'Đang OCR...' : 'Chạy lại OCR'),
               ),
             ],
           ],
         ),
-      ),
     );
   }
 
@@ -176,10 +217,10 @@ class _ConfidenceChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final pct = (confidence * 100).round();
     final color = confidence >= 0.8
-        ? Colors.green
+        ? AppColors.success
         : confidence >= 0.5
-            ? Colors.orange
-            : Colors.red;
+            ? AppColors.warning
+            : AppColors.error;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

@@ -6,6 +6,7 @@ class SessionAiSummary extends Equatable {
   const SessionAiSummary({
     required this.sessionId,
     required this.detectedTopic,
+    required this.shortSummary,
     required this.overview,
     required this.keyPoints,
     required this.bulletSummary,
@@ -18,6 +19,8 @@ class SessionAiSummary extends Equatable {
 
   final String sessionId;
   final String detectedTopic;
+  /// 3–5 dòng tóm tắt nhanh (linh hồn bài học).
+  final String shortSummary;
   final String overview;
   final List<String> keyPoints;
   final List<String> bulletSummary;
@@ -33,6 +36,7 @@ class SessionAiSummary extends Equatable {
   List<Object?> get props => [
         sessionId,
         detectedTopic,
+        shortSummary,
         overview,
         keyPoints,
         bulletSummary,

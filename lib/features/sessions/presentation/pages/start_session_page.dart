@@ -6,7 +6,9 @@ import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/routing/route_paths.dart';
 import 'package:snapstudy/core/utils/extensions.dart';
 import 'package:snapstudy/core/widgets/app_button.dart';
+import 'package:snapstudy/core/widgets/app_empty_state.dart';
 import 'package:snapstudy/core/widgets/app_loading.dart';
+import 'package:snapstudy/core/widgets/app_scaffold.dart';
 import 'package:snapstudy/features/sessions/presentation/providers/session_providers.dart';
 import 'package:snapstudy/features/subjects/domain/entities/subject.dart';
 import 'package:snapstudy/features/subjects/presentation/providers/subject_providers.dart';
@@ -80,7 +82,10 @@ class StartSessionPage extends HookConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Bắt đầu buổi học')),
+      appBar: AppBar(
+        title: const Text('Bắt đầu buổi học'),
+        scrolledUnderElevation: 1,
+      ),
       body: subjectsAsync.when(
         loading: () => const AppLoading(
           fullScreen: true,
@@ -89,28 +94,14 @@ class StartSessionPage extends HookConsumerWidget {
         error: (e, _) => Center(child: Text(e.toString())),
         data: (subjects) {
           if (subjects.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.school_outlined, size: 64),
-                    const SizedBox(height: 16),
-                    const Text('Chưa có môn học'),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tạo môn học trước khi bắt đầu buổi chụp',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 24),
-                    AppButton(
-                      label: 'Tạo môn học',
-                      onPressed: () => context.push(RoutePaths.subjectCreate),
-                    ),
-                  ],
-                ),
+            return AppEmptyState(
+              title: 'Chưa có môn học',
+              subtitle: 'Tạo môn học trước khi bắt đầu buổi chụp',
+              icon: Icons.school_outlined,
+              action: AppButton(
+                label: 'Tạo môn học',
+                icon: Icons.add,
+                onPressed: () => context.push(RoutePaths.subjectCreate),
               ),
             );
           }
@@ -118,59 +109,88 @@ class StartSessionPage extends HookConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(AppConstants.defaultPadding),
             children: [
-              Text(
-                'Chọn môn học',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: subjects.map((s) {
-                  final selected = selectedSubject.value?.id == s.id;
-                  final color = Color(s.colorValue);
-                  return FilterChip(
-                    selected: selected,
-                    label: Text(s.name),
-                    avatar: Icon(
-                      IconData(s.iconCodePoint, fontFamily: 'MaterialIcons'),
-                      size: 18,
-                      color: color,
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const AppSectionHeader(
+                      title: 'Chọn môn học',
+                      subtitle: 'Môn học sẽ được gắn vào buổi chụp',
                     ),
-                    onSelected: (_) {
-                      selectedSubject.value = s;
-                      if (titleController.text.isEmpty ||
-                          titleController.text.startsWith('Buổi học ')) {
-                        titleController.text = 'Buổi học ${s.name}';
-                      }
-                    },
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Tiêu đề buổi học *',
-                  hintText: 'VD: Chương 4 — Đạo hàm',
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: subjects.map((s) {
+                        final selected = selectedSubject.value?.id == s.id;
+                        final color = Color(s.colorValue);
+                        return FilterChip(
+                          selected: selected,
+                          label: Text(s.name),
+                          avatar: Icon(
+                            IconData(s.iconCodePoint,
+                                fontFamily: 'MaterialIcons'),
+                            size: 18,
+                            color: color,
+                          ),
+                          selectedColor: color.withValues(alpha: 0.15),
+                          checkmarkColor: color,
+                          side: BorderSide(
+                            color: selected
+                                ? color
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .outline
+                                    .withValues(alpha: 0.5),
+                          ),
+                          onSelected: (_) {
+                            selectedSubject.value = s;
+                            if (titleController.text.isEmpty ||
+                                titleController.text.startsWith('Buổi học ')) {
+                              titleController.text = 'Buổi học ${s.name}';
+                            }
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Ghi chú (tuỳ chọn)',
-                ),
-                maxLines: 2,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Tự động gắn thẻ: môn học, ngày, snapstudy',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+              const SizedBox(height: AppConstants.sectionSpacing),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const AppSectionHeader(title: 'Thông tin buổi học'),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tiêu đề buổi học *',
+                        hintText: 'VD: Chương 4 — Đạo hàm',
+                      ),
                     ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Ghi chú (tuỳ chọn)',
+                      ),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Tự động gắn thẻ: môn học, ngày, snapstudy',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: AppConstants.sectionSpacing),
               AppButton(
                 label: 'Bắt đầu chụp',
                 icon: Icons.play_arrow_rounded,

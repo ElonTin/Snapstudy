@@ -6,6 +6,7 @@ import 'package:snapstudy/core/errors/failures.dart';
 import 'package:snapstudy/core/theme/app_colors.dart';
 import 'package:snapstudy/core/utils/extensions.dart';
 import 'package:snapstudy/core/widgets/app_button.dart';
+import 'package:snapstudy/core/widgets/app_scaffold.dart';
 import 'package:snapstudy/features/auth/presentation/providers/auth_providers.dart';
 import 'package:snapstudy/features/auth/presentation/widgets/google_sign_in_button.dart';
 
@@ -36,38 +37,45 @@ class LoginPage extends ConsumerWidget {
             children: [
               const Spacer(),
               Center(
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        AppColors.aiGradientStart,
-                        AppColors.aiGradientEnd,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(22),
-                  ),
-                  child: const Icon(
-                    Icons.camera_enhance_rounded,
-                    color: Colors.white,
-                    size: 40,
+                child: AppCard(
+                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 28),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              AppColors.aiGradientStart,
+                              AppColors.aiGradientEnd,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(
+                          Icons.menu_book_rounded,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Chào mừng đến ${AppConstants.appName}',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Đăng nhập để đồng bộ buổi học và tài liệu AI của bạn',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Chào mừng đến ${AppConstants.appName}',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Đăng nhập để đồng bộ buổi học và tài liệu AI của bạn',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
               ),
               const Spacer(),
               GoogleSignInButton(

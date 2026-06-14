@@ -1,7 +1,7 @@
 import 'package:snapstudy/core/env/env_config.dart';
 import 'package:snapstudy/core/errors/failures.dart';
 import 'package:snapstudy/core/utils/result.dart';
-import 'package:snapstudy/features/ai_summary/data/services/gemini_api_client.dart';
+import 'package:snapstudy/features/ai/data/services/llm_json_client.dart';
 import 'package:snapstudy/features/ai_summary/data/services/gemini_token_limits.dart';
 import 'package:snapstudy/features/ai_summary/data/services/gemini_prompt_builder.dart';
 import 'package:snapstudy/features/ai_summary/data/services/mock_ai_summary_generator.dart';
@@ -14,12 +14,12 @@ import 'package:snapstudy/features/sessions/domain/repositories/session_reposito
 class AiSummaryRepositoryImpl implements AiSummaryRepository {
   AiSummaryRepositoryImpl({
     required SessionRepository sessions,
-    required GeminiApiClient gemini,
+    required LlmJsonClient llm,
   })  : _sessions = sessions,
-        _gemini = gemini;
+        _llm = llm;
 
   final SessionRepository _sessions;
-  final GeminiApiClient _gemini;
+  final LlmJsonClient _llm;
 
   @override
   Future<Result<SessionAiSummary>> generateAndSave({
@@ -42,7 +42,7 @@ class AiSummaryRepositoryImpl implements AiSummaryRepository {
         session: session,
         ocr: ocr,
       );
-      final raw = await _gemini.generateJson(
+      final raw = await _llm.generateJson(
         prompt: prompt,
         feature: GeminiAiFeature.summary,
       );
@@ -50,7 +50,7 @@ class AiSummaryRepositoryImpl implements AiSummaryRepository {
         final parsed = SummaryJsonParser.parse(
           sessionId: session.id,
           rawJson: jsonText,
-          modelName: EnvConfig.geminiModel,
+          modelName: EnvConfig.activeTextLlmModel,
         );
         return parsed;
       });

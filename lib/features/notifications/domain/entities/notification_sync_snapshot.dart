@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:snapstudy/features/notifications/domain/entities/card_review_reminder.dart';
 
 /// Context used to build scheduled notification copy.
 class NotificationSyncSnapshot extends Equatable {
@@ -9,6 +10,7 @@ class NotificationSyncSnapshot extends Equatable {
     required this.reviewedToday,
     required this.hasActiveSession,
     required this.pendingSessionCount,
+    this.upcomingCardReminders = const [],
   });
 
   final int dueCards;
@@ -17,6 +19,7 @@ class NotificationSyncSnapshot extends Equatable {
   final int reviewedToday;
   final bool hasActiveSession;
   final int pendingSessionCount;
+  final List<CardReviewReminder> upcomingCardReminders;
 
   @override
   List<Object?> get props => [
@@ -26,5 +29,6 @@ class NotificationSyncSnapshot extends Equatable {
         reviewedToday,
         hasActiveSession,
         pendingSessionCount,
+        upcomingCardReminders,
       ];
 }

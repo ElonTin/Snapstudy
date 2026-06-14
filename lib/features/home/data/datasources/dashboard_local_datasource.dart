@@ -10,6 +10,7 @@ import 'package:snapstudy/features/sessions/domain/entities/session_status.dart'
     as sessions;
 import 'package:snapstudy/features/sessions/domain/entities/study_session.dart';
 import 'package:snapstudy/features/sessions/domain/repositories/session_repository.dart';
+import 'package:snapstudy/features/sessions/presentation/utils/session_display_labels.dart';
 import 'package:snapstudy/features/spaced_repetition/domain/repositories/spaced_repetition_repository.dart';
 import 'package:snapstudy/features/subjects/domain/repositories/subject_repository.dart';
 
@@ -54,8 +55,9 @@ class DashboardLocalDataSource {
         .map(
           (s) => home.RecentSession(
             id: s.id,
-            title: s.title,
+            title: SessionDisplayLabels.title(s),
             subjectName: s.subjectName,
+            subtitle: SessionDisplayLabels.subtitle(s),
             subjectColorValue: s.subjectColorValue,
             photoCount: s.photoCount,
             startedAt: s.startedAt,

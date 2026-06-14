@@ -1,7 +1,7 @@
 import 'package:snapstudy/core/env/env_config.dart';
 import 'package:snapstudy/core/errors/failures.dart';
 import 'package:snapstudy/core/utils/result.dart';
-import 'package:snapstudy/features/ai_summary/data/services/gemini_api_client.dart';
+import 'package:snapstudy/features/ai/data/services/llm_json_client.dart';
 import 'package:snapstudy/features/ai_summary/data/services/gemini_token_limits.dart';
 import 'package:snapstudy/features/flashcards/data/services/flashcard_json_parser.dart';
 import 'package:snapstudy/features/flashcards/data/services/flashcard_prompt_builder.dart';
@@ -17,12 +17,12 @@ import 'package:snapstudy/features/sessions/domain/repositories/session_reposito
 class FlashcardRepositoryImpl implements FlashcardRepository {
   FlashcardRepositoryImpl({
     required SessionRepository sessions,
-    required GeminiApiClient gemini,
+    required LlmJsonClient llm,
   })  : _sessions = sessions,
-        _gemini = gemini;
+        _llm = llm;
 
   final SessionRepository _sessions;
-  final GeminiApiClient _gemini;
+  final LlmJsonClient _llm;
 
   @override
   Future<Result<SessionFlashcardDeck>> generateAndSave({
@@ -49,7 +49,7 @@ class FlashcardRepositoryImpl implements FlashcardRepository {
         ocr: ocr,
         summary: session.aiSummary,
       );
-      final raw = await _gemini.generateJson(
+      final raw = await _llm.generateJson(
         prompt: prompt,
         feature: GeminiAiFeature.flashcards,
       );
@@ -57,7 +57,7 @@ class FlashcardRepositoryImpl implements FlashcardRepository {
         return FlashcardJsonParser.parse(
           sessionId: session.id,
           rawJson: jsonText,
-          modelName: EnvConfig.geminiModel,
+          modelName: EnvConfig.activeTextLlmModel,
         );
       });
     }

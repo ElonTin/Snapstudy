@@ -13,8 +13,12 @@ abstract final class RouteNames {
   static const String sessionActive = 'sessionActive';
   static const String sessionDetail = 'sessionDetail';
   static const String cameraCapture = 'cameraCapture';
+  static const String galleryImport = 'galleryImport';
+  static const String sessionsHistory = 'sessionsHistory';
+  static const String ingestProgress = 'ingestProgress';
   static const String flashcardStudy = 'flashcardStudy';
   static const String quizPlay = 'quizPlay';
   static const String mindmapView = 'mindmapView';
   static const String reviewQueue = 'reviewQueue';
+  static const String weakAreas = 'weakAreas';
 }

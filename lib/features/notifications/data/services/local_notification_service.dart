@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:snapstudy/core/notifications/notification_channels.dart';
+import 'package:snapstudy/core/notifications/notification_ids.dart';
 import 'package:snapstudy/core/notifications/notification_navigation.dart';
 import 'package:snapstudy/core/utils/logger.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -192,6 +193,47 @@ class LocalNotificationService {
   }
 
   Future<void> cancel(int id) => _plugin.cancel(id);
+
+  Future<void> scheduleAt({
+    required int id,
+    required DateTime scheduledAt,
+    required String title,
+    required String body,
+    required String channelId,
+    required String payload,
+  }) async {
+    if (scheduledAt.isBefore(DateTime.now())) return;
+
+    final tzTime = tz.TZDateTime.from(scheduledAt, tz.local);
+
+    await _plugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tzTime,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          channelId,
+          channelId,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: payload,
+    );
+  }
+
+  Future<void> cancelCardReminders() async {
+    for (var id = NotificationIds.cardReminderBase;
+        id < NotificationIds.cardReminderMax;
+        id++) {
+      await _plugin.cancel(id);
+    }
+  }
 
   Future<void> cancelReviewStreakSession() async {
     await _plugin.cancel(1001);

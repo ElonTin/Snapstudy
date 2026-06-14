@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/routing/route_paths.dart';
 import 'package:snapstudy/core/utils/extensions.dart';
+import 'package:snapstudy/core/widgets/app_button.dart';
 import 'package:snapstudy/core/widgets/app_empty_state.dart';
 import 'package:snapstudy/core/widgets/app_error_view.dart';
 import 'package:snapstudy/core/widgets/app_loading.dart';
+import 'package:snapstudy/core/widgets/app_scaffold.dart';
 import 'package:snapstudy/features/subjects/domain/entities/subject.dart';
 import 'package:snapstudy/features/subjects/domain/entities/subject_folder.dart';
 import 'package:snapstudy/features/subjects/presentation/providers/subject_providers.dart';
@@ -23,6 +25,7 @@ class SubjectsListPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Môn học'),
+        scrolledUnderElevation: 1,
         actions: [
           IconButton(
             icon: const Icon(Icons.create_new_folder_outlined),
@@ -56,10 +59,10 @@ class SubjectsListPage extends ConsumerWidget {
                   title: 'Chưa có môn học',
                   subtitle: 'Tạo môn học để tổ chức buổi chụp và tài liệu AI',
                   icon: Icons.school_outlined,
-                  action: FilledButton.icon(
+                  action: AppButton(
+                    label: 'Tạo môn học',
+                    icon: Icons.add,
                     onPressed: () => context.push(RoutePaths.subjectCreate),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Tạo môn học'),
                   ),
                 );
               }
@@ -320,28 +323,20 @@ class _FolderHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8, top: 4),
-      child: Row(
-        children: [
-          Icon(Icons.folder_outlined,
-              size: 20, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '$title ($count)',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-          ),
-          if (onDelete != null)
-            IconButton(
-              icon: const Icon(Icons.delete_outline, size: 20),
-              onPressed: onDelete,
-              tooltip: 'Xoá thư mục',
-            ),
-        ],
+      padding: const EdgeInsets.only(bottom: 8, top: 8),
+      child: AppSectionHeader(
+        title: title,
+        subtitle: '$count môn',
+        trailing: onDelete != null
+            ? IconButton(
+                icon: Icon(Icons.delete_outline,
+                    size: 20, color: colors.onSurfaceVariant),
+                onPressed: onDelete,
+                tooltip: 'Xoá thư mục',
+              )
+            : null,
       ),
     );
   }
@@ -366,72 +361,63 @@ class _SubjectListTile extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    IconData(subject.iconCodePoint,
-                        fontFamily: 'MaterialIcons'),
-                    color: color,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        subject.name,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                      if (subject.description != null &&
-                          subject.description!.isNotEmpty)
-                        Text(
-                          subject.description!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: colors.onSurfaceVariant,
-                              ),
-                        ),
-                      Text(
-                        '${subject.sessionCount} buổi · ${subject.pendingReviews} ôn tập',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: colors.onSurfaceVariant,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 20),
-                  onPressed: onEdit,
-                ),
-                IconButton(
-                  icon: Icon(Icons.delete_outline,
-                      size: 20, color: colors.error),
-                  onPressed: onDelete,
-                ),
-              ],
+      padding: const EdgeInsets.only(bottom: AppConstants.compactPadding),
+      child: AppCard(
+        onTap: onTap,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(AppConstants.smallRadius),
+              ),
+              child: Icon(
+                IconData(subject.iconCodePoint, fontFamily: 'MaterialIcons'),
+                color: color,
+              ),
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    subject.name,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  if (subject.description != null &&
+                      subject.description!.isNotEmpty)
+                    Text(
+                      subject.description!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                    ),
+                  Text(
+                    '${subject.sessionCount} buổi · ${subject.pendingReviews} ôn tập',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, size: 20),
+              onPressed: onEdit,
+            ),
+            IconButton(
+              icon: Icon(Icons.delete_outline, size: 20, color: colors.error),
+              onPressed: onDelete,
+            ),
+          ],
         ),
       ),
     );

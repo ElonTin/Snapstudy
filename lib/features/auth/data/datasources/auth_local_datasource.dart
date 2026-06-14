@@ -15,62 +15,81 @@ class AuthLocalDataSource {
 
   Future<AuthSession?> readSession() async {
     try {
-      final accessToken =
-          await _storage.read(key: SecureStorageKeys.accessToken);
-      final refreshToken =
-          await _storage.read(key: SecureStorageKeys.refreshToken);
-      final userJson = await _storage.read(key: SecureStorageKeys.userJson);
-      final expiresAtStr =
-          await _storage.read(key: SecureStorageKeys.tokenExpiresAt);
-
-      if (accessToken == null ||
-          accessToken.isEmpty ||
-          refreshToken == null ||
-          userJson == null) {
-        return null;
-      }
-
-      final userMap = jsonDecode(userJson) as Map<String, dynamic>;
-      final user = UserDto.fromJson(userMap).toEntity();
-      final expiresAt = expiresAtStr != null
-          ? DateTime.tryParse(expiresAtStr)
-          : null;
-
-      return AuthSession(
-        user: user,
-        tokens: AuthTokens(
-          accessToken: accessToken,
-          refreshToken: refreshToken,
-          expiresAt: expiresAt,
-        ),
-      );
+      return await _readRawSession();
     } catch (e) {
-      throw CacheException('Không đọc được phiên đăng nhập: $e');
+      // Tự động sửa lỗi: Nếu khóa KeyStore bị lỗi (do Android Auto Backup khôi phục file cũ nhưng mất khóa)
+      // ta tiến hành xóa sạch dữ liệu cũ để tránh crash ứng dụng.
+      try {
+        await _storage.deleteAll();
+      } catch (_) {}
+      return null;
     }
+  }
+
+  Future<AuthSession?> _readRawSession() async {
+    final accessToken =
+        await _storage.read(key: SecureStorageKeys.accessToken);
+    final refreshToken =
+        await _storage.read(key: SecureStorageKeys.refreshToken);
+    final userJson = await _storage.read(key: SecureStorageKeys.userJson);
+    final expiresAtStr =
+        await _storage.read(key: SecureStorageKeys.tokenExpiresAt);
+
+    if (accessToken == null ||
+        accessToken.isEmpty ||
+        refreshToken == null ||
+        userJson == null) {
+      return null;
+    }
+
+    final userMap = jsonDecode(userJson) as Map<String, dynamic>;
+    final user = UserDto.fromJson(userMap).toEntity();
+    final expiresAt = expiresAtStr != null
+        ? DateTime.tryParse(expiresAtStr)
+        : null;
+
+    return AuthSession(
+      user: user,
+      tokens: AuthTokens(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        expiresAt: expiresAt,
+      ),
+    );
   }
 
   Future<void> saveSession(AuthSession session) async {
     try {
-      await _storage.write(
-        key: SecureStorageKeys.accessToken,
-        value: session.tokens.accessToken,
-      );
-      await _storage.write(
-        key: SecureStorageKeys.refreshToken,
-        value: session.tokens.refreshToken,
-      );
-      await _storage.write(
-        key: SecureStorageKeys.userJson,
-        value: jsonEncode(UserDto.fromEntity(session.user).toJson()),
-      );
-      if (session.tokens.expiresAt != null) {
-        await _storage.write(
-          key: SecureStorageKeys.tokenExpiresAt,
-          value: session.tokens.expiresAt!.toIso8601String(),
-        );
-      }
+      await _writeRawSession(session);
     } catch (e) {
-      throw CacheException('Không lưu được phiên đăng nhập: $e');
+      // Nếu ghi thất bại do KeyStore lỗi, xóa toàn bộ và ghi lại lần nữa
+      try {
+        await _storage.deleteAll();
+        await _writeRawSession(session);
+      } catch (retryError) {
+        throw CacheException('Không lưu được phiên đăng nhập: $retryError');
+      }
+    }
+  }
+
+  Future<void> _writeRawSession(AuthSession session) async {
+    await _storage.write(
+      key: SecureStorageKeys.accessToken,
+      value: session.tokens.accessToken,
+    );
+    await _storage.write(
+      key: SecureStorageKeys.refreshToken,
+      value: session.tokens.refreshToken,
+    );
+    await _storage.write(
+      key: SecureStorageKeys.userJson,
+      value: jsonEncode(UserDto.fromEntity(session.user).toJson()),
+    );
+    if (session.tokens.expiresAt != null) {
+      await _storage.write(
+        key: SecureStorageKeys.tokenExpiresAt,
+        value: session.tokens.expiresAt!.toIso8601String(),
+      );
     }
   }
 

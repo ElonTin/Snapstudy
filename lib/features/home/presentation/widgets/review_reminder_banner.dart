@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/routing/route_paths.dart';
 import 'package:snapstudy/core/theme/app_colors.dart';
 import 'package:snapstudy/features/spaced_repetition/presentation/providers/spaced_repetition_providers.dart';
@@ -12,6 +13,7 @@ class ReviewReminderBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(spacedRepetitionStatsProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return statsAsync.when(
       data: (stats) {
@@ -23,23 +25,41 @@ class ReviewReminderBanner extends ConsumerWidget {
             color: Colors.transparent,
             child: InkWell(
               onTap: () => context.push(RoutePaths.reviewQueue),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
               child: Ink(
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      AppColors.aiGradientStart,
-                      AppColors.aiGradientEnd,
-                    ],
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+                  border: Border.all(
+                    color: AppColors.secondary.withValues(alpha: 0.4),
+                    width: 1,
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: isDark
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.25),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      const Icon(Icons.notifications_active,
-                          color: Colors.white),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.notifications_active_rounded,
+                          color: AppColors.secondaryLight,
+                          size: 22,
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -63,13 +83,16 @@ class ReviewReminderBanner extends ConsumerWidget {
                                   .textTheme
                                   .bodySmall
                                   ?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.9),
+                                    color: Colors.white.withValues(alpha: 0.85),
                                   ),
                             ),
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right, color: Colors.white),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.secondaryLight.withValues(alpha: 0.9),
+                      ),
                     ],
                   ),
                 ),

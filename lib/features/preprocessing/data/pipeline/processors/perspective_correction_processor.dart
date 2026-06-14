@@ -1,12 +1,12 @@
-import 'package:image/image.dart' as img;
 import 'package:snapstudy/features/preprocessing/data/pipeline/pipeline_processor.dart';
 import 'package:snapstudy/features/preprocessing/data/pipeline/pipeline_state.dart';
 import 'package:snapstudy/features/preprocessing/data/utils/document_contour_utils.dart';
+import 'package:snapstudy/features/preprocessing/data/utils/image_pipeline_helpers.dart';
 import 'package:snapstudy/features/preprocessing/domain/entities/preprocessing_options.dart';
 import 'package:snapstudy/features/preprocessing/domain/entities/preprocessing_step_id.dart';
 import 'package:snapstudy/features/preprocessing/domain/entities/preprocessing_step_result.dart';
 
-/// Crops to detected document bounds (perspective warp when OpenCV native is enabled).
+/// Perspective warp from detected document quad to flat rectangle.
 class PerspectiveCorrectionProcessor implements PipelineProcessor {
   @override
   PreprocessingStepId get stepId => PreprocessingStepId.perspectiveCorrection;
@@ -25,21 +25,7 @@ class PerspectiveCorrectionProcessor implements PipelineProcessor {
         message = 'Bỏ qua — chưa có khung tài liệu';
       } else {
         final ordered = orderDocumentQuad(quad);
-        final left = ordered.map((p) => p.x).reduce((a, b) => a < b ? a : b);
-        final top = ordered.map((p) => p.y).reduce((a, b) => a < b ? a : b);
-        final right = ordered.map((p) => p.x).reduce((a, b) => a > b ? a : b);
-        final bottom = ordered.map((p) => p.y).reduce((a, b) => a > b ? a : b);
-
-        final w = (right - left).clamp(1, state.image.width - left);
-        final h = (bottom - top).clamp(1, state.image.height - top);
-
-        state.image = img.copyCrop(
-          state.image,
-          x: left,
-          y: top,
-          width: w,
-          height: h,
-        );
+        state.image = warpPerspective(state.image, ordered);
         state.perspectiveApplied = true;
         applied = true;
       }

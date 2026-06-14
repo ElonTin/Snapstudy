@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:snapstudy/core/errors/failures.dart';
 import 'package:snapstudy/core/utils/result.dart';
 import 'package:snapstudy/features/mindmap/data/services/mindmap_color_utils.dart';
+import 'package:snapstudy/features/mindmap/data/services/mindmap_compact_utils.dart';
 import 'package:snapstudy/features/mindmap/domain/entities/mindmap_cluster.dart';
 import 'package:snapstudy/features/mindmap/domain/entities/mindmap_node.dart';
 import 'package:snapstudy/features/mindmap/domain/entities/mindmap_status.dart';
@@ -11,7 +12,7 @@ import 'package:snapstudy/features/mindmap/domain/entities/session_mindmap.dart'
 /// Parses and validates structured mindmap graph JSON from AI.
 abstract final class MindmapJsonParser {
   static const _minNodes = 4;
-  static const _maxNodes = 28;
+  static const _maxNodes = 14;
 
   static Result<SessionMindmap> parse({
     required String sessionId,
@@ -93,7 +94,7 @@ abstract final class MindmapJsonParser {
         nodes.add(
           MindmapNode(
             id: id.trim(),
-            label: label.trim(),
+            label: MindmapCompactUtils.shortenLabel(label),
             parentId: parentId is String && parentId.trim().isNotEmpty
                 ? parentId.trim()
                 : null,
@@ -134,18 +135,18 @@ abstract final class MindmapJsonParser {
         );
       }
 
-      return Success(
-        SessionMindmap(
-          sessionId: sessionId,
-          title: title.trim(),
-          rootId: rootId.trim(),
-          nodes: linked,
-          clusters: clusters,
-          status: MindmapStatus.completed,
-          generatedAt: DateTime.now(),
-          modelName: modelName,
-        ),
+      final raw = SessionMindmap(
+        sessionId: sessionId,
+        title: MindmapCompactUtils.shortenLabel(title),
+        rootId: rootId.trim(),
+        nodes: linked,
+        clusters: clusters,
+        status: MindmapStatus.completed,
+        generatedAt: DateTime.now(),
+        modelName: modelName,
       );
+
+      return Success(MindmapCompactUtils.compact(raw));
     } catch (e) {
       return Error(ValidationFailure('JSON mindmap không hợp lệ: $e'));
     }

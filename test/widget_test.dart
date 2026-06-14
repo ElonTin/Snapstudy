@@ -34,7 +34,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.textContaining('Xin chào'), findsOneWidget);
-    expect(find.text('Bắt đầu chụp'), findsOneWidget);
+    expect(find.text('Chụp bài'), findsOneWidget);
+    expect(find.text('Import ảnh'), findsOneWidget);
   });
 
   testWidgets('Login page shows sign-in actions', (WidgetTester tester) async {

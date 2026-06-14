@@ -23,10 +23,16 @@ class PreprocessingOptions {
   static const PreprocessingOptions disabled =
       PreprocessingOptions(enabled: false, steps: []);
 
-  /// Light touch before OCR — avoids aggressive crop that can clip text.
+  /// Tiền xử lý nhẹ trước OCR — không warp/crop (tránh hỏng ảnh màn hình/chụp nghiêng).
   static const PreprocessingOptions forOcr = PreprocessingOptions(
     steps: [
       PreprocessingStepId.contrastEnhancement,
+      PreprocessingStepId.noiseReduction,
     ],
+  );
+
+  /// Toàn bộ pipeline tài liệu phẳng (chỉ khi bật thủ công).
+  static const PreprocessingOptions forFlatDocument = PreprocessingOptions(
+    steps: defaultSteps,
   );
 }

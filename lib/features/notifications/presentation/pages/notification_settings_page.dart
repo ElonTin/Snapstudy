@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/env/env_config.dart';
 import 'package:snapstudy/core/utils/extensions.dart';
+import 'package:snapstudy/core/widgets/app_button.dart';
 import 'package:snapstudy/core/widgets/app_loading.dart';
+import 'package:snapstudy/core/widgets/app_scaffold.dart';
 import 'package:snapstudy/features/notifications/domain/entities/notification_preferences.dart';
 import 'package:snapstudy/core/routing/route_paths.dart';
 import 'package:go_router/go_router.dart';
@@ -61,7 +63,7 @@ class _NotificationSettingsPageState
     return Scaffold(
       appBar: AppBar(title: const Text('Thông báo')),
       body: prefsAsync.when(
-        loading: () => const AppLoading(fullScreen: true),
+        loading: () => const AppLoading(fullScreen: true, useSkeleton: true),
         error: (e, _) => Center(child: Text('$e')),
         data: (prefs) {
           final draft = _draft ?? prefs;
@@ -69,150 +71,229 @@ class _NotificationSettingsPageState
           return ListView(
             padding: const EdgeInsets.all(AppConstants.defaultPadding),
             children: [
-              ListTile(
-                leading: const Icon(Icons.inbox_outlined),
-                title: const Text('Hộp thông báo'),
-                subtitle: const Text('Lịch sử push & nhắc local'),
-                trailing: const Icon(Icons.chevron_right),
+              AppCard(
                 onTap: () => context.push(RoutePaths.notificationHistory),
+                padding: EdgeInsets.zero,
+                child: ListTile(
+                  leading: Icon(
+                    Icons.inbox_outlined,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  title: const Text('Hộp thông báo'),
+                  subtitle: const Text('Lịch sử push & nhắc local'),
+                  trailing: const Icon(Icons.chevron_right),
+                ),
               ),
-              const Divider(),
+              const SizedBox(height: 20),
               if (EnvConfig.enableFcm) ...[
-                ListTile(
-                  leading: const Icon(Icons.cloud_outlined),
-                  title: const Text('Firebase Cloud Messaging'),
-                  subtitle: Text(
-                    draft.fcmToken != null
-                        ? 'Token đã lưu — đăng ký server khi có API'
-                        : 'Bật ENABLE_FIREBASE + google-services',
+                const AppSectionHeader(
+                  title: 'Firebase Cloud Messaging',
+                  subtitle: 'Đăng ký push từ server',
+                ),
+                const SizedBox(height: 8),
+                AppCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.cloud_outlined,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              draft.fcmToken != null
+                                  ? 'Token đã lưu — đăng ký server khi có API'
+                                  : 'Bật ENABLE_FIREBASE + google-services',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (EnvConfig.enablePushRegistration) ...[
+                        const SizedBox(height: 14),
+                        AppButton(
+                          label: 'Đăng ký push lên server',
+                          variant: AppButtonVariant.outline,
+                          icon: Icons.cloud_upload_outlined,
+                          expand: true,
+                          onPressed: _saving
+                              ? null
+                              : () async {
+                                  await ref
+                                      .read(notificationRepositoryProvider)
+                                      .registerPushWithServer();
+                                  if (context.mounted) {
+                                    context.showSnack(
+                                      'Đã gửi token lên server (nếu endpoint sẵn sàng)',
+                                    );
+                                  }
+                                },
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                if (EnvConfig.enablePushRegistration)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: OutlinedButton.icon(
-                      onPressed: _saving
-                          ? null
-                          : () async {
-                              await ref
-                                  .read(notificationRepositoryProvider)
-                                  .registerPushWithServer();
-                              if (context.mounted) {
-                                context.showSnack(
-                                  'Đã gửi token lên server (nếu endpoint sẵn sàng)',
-                                );
-                              }
-                            },
-                      icon: const Icon(Icons.cloud_upload_outlined),
-                      label: const Text('Đăng ký push lên server'),
-                    ),
-                  ),
-                const Divider(),
+                const SizedBox(height: 20),
               ],
-              SwitchListTile(
-                title: const Text('Nhắc ôn tập (SRS)'),
-                subtitle: const Text('Hàng ngày khi còn thẻ due'),
-                value: draft.reviewRemindersEnabled,
-                onChanged: _saving
-                    ? null
-                    : (v) => setState(
-                          () => _draft = draft.copyWith(
-                            reviewRemindersEnabled: v,
-                          ),
-                        ),
+              const AppSectionHeader(
+                title: 'Nhắc ôn tập (SRS)',
+                subtitle: 'Hàng ngày khi còn thẻ due',
               ),
-              ListTile(
-                title: const Text('Giờ nhắc ôn'),
-                trailing: Text(_timeLabel(draft.reviewHour, draft.reviewMinute)),
-                onTap: _saving
-                    ? null
-                    : () => _pickTime(
-                          hour: draft.reviewHour,
-                          minute: draft.reviewMinute,
-                          onPicked: (t) => setState(
-                            () => _draft = draft.copyWith(
-                              reviewHour: t.hour,
-                              reviewMinute: t.minute,
+              const SizedBox(height: 8),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      title: const Text('Bật nhắc ôn tập'),
+                      value: draft.reviewRemindersEnabled,
+                      onChanged: _saving
+                          ? null
+                          : (v) => setState(
+                                () => _draft = draft.copyWith(
+                                  reviewRemindersEnabled: v,
+                                ),
+                              ),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      title: const Text('Giờ nhắc ôn'),
+                      trailing: Text(
+                        _timeLabel(draft.reviewHour, draft.reviewMinute),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w600,
                             ),
-                          ),
-                        ),
-              ),
-              const Divider(),
-              SwitchListTile(
-                title: const Text('Nhắc streak'),
-                subtitle: const Text('Sáng — nếu chưa ôn trong ngày'),
-                value: draft.streakRemindersEnabled,
-                onChanged: _saving
-                    ? null
-                    : (v) => setState(
-                          () => _draft =
-                              draft.copyWith(streakRemindersEnabled: v),
-                        ),
-              ),
-              ListTile(
-                title: const Text('Giờ nhắc streak'),
-                trailing:
-                    Text(_timeLabel(draft.streakHour, draft.streakMinute)),
-                onTap: _saving
-                    ? null
-                    : () => _pickTime(
-                          hour: draft.streakHour,
-                          minute: draft.streakMinute,
-                          onPicked: (t) => setState(
-                            () => _draft = draft.copyWith(
-                              streakHour: t.hour,
-                              streakMinute: t.minute,
-                            ),
-                          ),
-                        ),
-              ),
-              const Divider(),
-              SwitchListTile(
-                title: const Text('Nhắc buổi học'),
-                subtitle: const Text(
-                  'Buổi đang mở hoặc chờ OCR/AI',
+                      ),
+                      onTap: _saving
+                          ? null
+                          : () => _pickTime(
+                                hour: draft.reviewHour,
+                                minute: draft.reviewMinute,
+                                onPicked: (t) => setState(
+                                  () => _draft = draft.copyWith(
+                                    reviewHour: t.hour,
+                                    reviewMinute: t.minute,
+                                  ),
+                                ),
+                              ),
+                    ),
+                  ],
                 ),
-                value: draft.sessionRemindersEnabled,
-                onChanged: _saving
-                    ? null
-                    : (v) => setState(
-                          () => _draft =
-                              draft.copyWith(sessionRemindersEnabled: v),
-                        ),
               ),
-              ListTile(
-                title: const Text('Giờ nhắc buổi học'),
-                trailing:
-                    Text(_timeLabel(draft.sessionHour, draft.sessionMinute)),
-                onTap: _saving
-                    ? null
-                    : () => _pickTime(
-                          hour: draft.sessionHour,
-                          minute: draft.sessionMinute,
-                          onPicked: (t) => setState(
-                            () => _draft = draft.copyWith(
-                              sessionHour: t.hour,
-                              sessionMinute: t.minute,
+              const SizedBox(height: 20),
+              const AppSectionHeader(
+                title: 'Nhắc streak',
+                subtitle: 'Sáng — nếu chưa ôn trong ngày',
+              ),
+              const SizedBox(height: 8),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      title: const Text('Bật nhắc streak'),
+                      value: draft.streakRemindersEnabled,
+                      onChanged: _saving
+                          ? null
+                          : (v) => setState(
+                                () => _draft =
+                                    draft.copyWith(streakRemindersEnabled: v),
+                              ),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      title: const Text('Giờ nhắc streak'),
+                      trailing: Text(
+                        _timeLabel(draft.streakHour, draft.streakMinute),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w600,
                             ),
-                          ),
-                        ),
+                      ),
+                      onTap: _saving
+                          ? null
+                          : () => _pickTime(
+                                hour: draft.streakHour,
+                                minute: draft.streakMinute,
+                                onPicked: (t) => setState(
+                                  () => _draft = draft.copyWith(
+                                    streakHour: t.hour,
+                                    streakMinute: t.minute,
+                                  ),
+                                ),
+                              ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 24),
-              FilledButton.icon(
+              const SizedBox(height: 20),
+              const AppSectionHeader(
+                title: 'Nhắc buổi học',
+                subtitle: 'Buổi đang mở hoặc chờ OCR/AI',
+              ),
+              const SizedBox(height: 8),
+              AppCard(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      title: const Text('Bật nhắc buổi học'),
+                      value: draft.sessionRemindersEnabled,
+                      onChanged: _saving
+                          ? null
+                          : (v) => setState(
+                                () => _draft =
+                                    draft.copyWith(sessionRemindersEnabled: v),
+                              ),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      title: const Text('Giờ nhắc buổi học'),
+                      trailing: Text(
+                        _timeLabel(draft.sessionHour, draft.sessionMinute),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      onTap: _saving
+                          ? null
+                          : () => _pickTime(
+                                hour: draft.sessionHour,
+                                minute: draft.sessionMinute,
+                                onPicked: (t) => setState(
+                                  () => _draft = draft.copyWith(
+                                    sessionHour: t.hour,
+                                    sessionMinute: t.minute,
+                                  ),
+                                ),
+                              ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 28),
+              AppButton(
+                label: _saving ? 'Đang lưu...' : 'Lưu & cập nhật lịch',
+                variant: AppButtonVariant.primary,
+                icon: Icons.save_outlined,
+                expand: true,
+                isLoading: _saving,
                 onPressed: _saving || _draft == null
                     ? null
                     : () => _save(_draft!),
-                icon: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save_outlined),
-                label: Text(_saving ? 'Đang lưu...' : 'Lưu & cập nhật lịch'),
               ),
               const SizedBox(height: 12),
-              OutlinedButton.icon(
+              AppButton(
+                label: 'Xin quyền & đồng bộ lại',
+                variant: AppButtonVariant.outline,
+                icon: Icons.notifications_active_outlined,
+                expand: true,
                 onPressed: _saving
                     ? null
                     : () async {
@@ -226,8 +307,6 @@ class _NotificationSettingsPageState
                           context.showSnack('Đã làm mới quyền & lịch nhắc');
                         }
                       },
-                icon: const Icon(Icons.notifications_active_outlined),
-                label: const Text('Xin quyền & đồng bộ lại'),
               ),
             ],
           );

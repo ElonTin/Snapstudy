@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:snapstudy/core/errors/app_exception.dart';
@@ -47,6 +47,29 @@ class SessionFileStorage {
       await dir.create(recursive: true);
     }
     return dir;
+  }
+
+  /// Creates a small JPEG thumbnail for queue grid display.
+  Future<String?> generateThumbnail(String imagePath, String sessionId) async {
+    try {
+      final dir = await _sessionDir(sessionId);
+      final name = 'thumb_${p.basenameWithoutExtension(imagePath)}.jpg';
+      final dest = p.join(dir.path, name);
+
+      final result = await FlutterImageCompress.compressAndGetFile(
+        imagePath,
+        dest,
+        minWidth: 256,
+        minHeight: 256,
+        quality: 70,
+        format: CompressFormat.jpeg,
+      );
+
+      return result?.path;
+    } catch (e) {
+      AppLogger.warning('Thumbnail generation failed', e);
+      return null;
+    }
   }
 
   Future<void> deleteFile(String path) async {

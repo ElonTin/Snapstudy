@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:snapstudy/features/ai/presentation/providers/llm_providers.dart';
 import 'package:snapstudy/features/ai_summary/presentation/providers/gemini_providers.dart';
+import 'package:snapstudy/features/camera/presentation/providers/camera_providers.dart';
 import 'package:snapstudy/features/ocr/data/repositories/ocr_repository_impl.dart';
+import 'package:snapstudy/features/ocr/data/services/ocr_text_enhancer.dart';
 import 'package:snapstudy/features/ocr/data/services/composite_text_recognition_service.dart';
 import 'package:snapstudy/features/ocr/data/services/gemini_vision_ocr_service.dart';
 import 'package:snapstudy/features/ocr/data/services/mlkit_text_recognition_service.dart';
@@ -55,6 +58,8 @@ final ocrRepositoryProvider = Provider<OcrRepository>((ref) {
   return OcrRepositoryImpl(
     recognition: ref.watch(textRecognitionServiceProvider),
     sessions: ref.watch(sessionRepositoryProvider),
+    captureProcessing: ref.watch(captureProcessingServiceProvider),
+    textEnhancer: OcrTextEnhancer(llm: ref.watch(textLlmClientProvider)),
     geminiDelayBetweenCaptures: OcrPlatform.useGeminiVision,
   );
 });

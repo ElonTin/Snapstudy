@@ -27,4 +27,34 @@ void main() {
     expect(full.nodes.length, greaterThan(collapsed.nodes.length));
     expect(collapsed.edges, isEmpty);
   });
+
+  test('all nodes stay inside canvas bounds', () {
+    final session = StudySession(
+      id: 's2',
+      subjectId: 'sub',
+      subjectName: 'Toán',
+      subjectColorValue: 0xFF2196F3,
+      title: 'Buổi rộng',
+      startedAt: DateTime(2025, 1, 1),
+      status: SessionStatus.completed,
+    );
+    final map = MockMindmapGenerator.generate(session: session);
+    final layout = MindmapTreeLayout.compute(
+      mindmap: map,
+      collapsedIds: {},
+    );
+
+    for (final ln in layout.nodes) {
+      expect(ln.position.dx, greaterThanOrEqualTo(0));
+      expect(ln.position.dy, greaterThanOrEqualTo(0));
+      expect(
+        ln.position.dx + ln.size.width,
+        lessThanOrEqualTo(layout.canvasSize.width + 0.01),
+      );
+      expect(
+        ln.position.dy + ln.size.height,
+        lessThanOrEqualTo(layout.canvasSize.height + 0.01),
+      );
+    }
+  });
 }

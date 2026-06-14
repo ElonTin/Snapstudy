@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:snapstudy/core/widgets/app_snackbar.dart';
 
 extension BuildContextX on BuildContext {
   ThemeData get theme => Theme.of(this);
@@ -9,12 +10,10 @@ extension BuildContextX on BuildContext {
   bool get isDark => theme.brightness == Brightness.dark;
 
   void showSnack(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(this).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: isError ? colors.error : null,
-      ),
+    AppSnackBar.show(
+      this,
+      message: message,
+      type: isError ? AppSnackType.error : AppSnackType.info,
     );
   }
 }

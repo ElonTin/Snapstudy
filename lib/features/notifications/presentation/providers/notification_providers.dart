@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:snapstudy/core/firebase/firebase_service.dart';
 import 'package:snapstudy/features/auth/presentation/providers/auth_providers.dart';
 import 'package:snapstudy/features/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:snapstudy/features/notifications/data/services/fcm_service.dart';
@@ -74,8 +77,22 @@ final unreadNotificationCountProvider = FutureProvider<int>((ref) async {
   );
 });
 
+/// Re-registers FCM token when user signs in (userId on server).
+final pushRegistrationSyncProvider = Provider<void>((ref) {
+  ref.listen(authControllerProvider, (previous, next) {
+    final session = next.valueOrNull;
+    if (session == null) return;
+    final prevId = previous?.valueOrNull?.user.id;
+    if (prevId == session.user.id) return;
+    unawaited(
+      ref.read(notificationRepositoryProvider).registerPushWithServer(),
+    );
+  });
+});
+
 /// Initializes notifications and syncs daily schedules.
 final notificationBootstrapProvider = FutureProvider<void>((ref) async {
+  await FirebaseService.ensureInitialized();
   final repo = ref.read(notificationRepositoryProvider);
   await repo.initialize();
   final prefs = await repo.getPreferences();

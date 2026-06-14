@@ -6,12 +6,12 @@ class GalleryImportService {
 
   final ImagePicker _picker;
 
-  Future<List<String>> pickMultiple({int imageQuality = 85}) async {
+  Future<List<String>> pickMultiple({int imageQuality = 100}) async {
     final files = await _picker.pickMultiImage(imageQuality: imageQuality);
     return files.map((f) => f.path).toList();
   }
 
-  Future<String?> pickSingle({int imageQuality = 85}) async {
+  Future<String?> pickSingle({int imageQuality = 100}) async {
     final file = await _picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: imageQuality,

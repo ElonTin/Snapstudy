@@ -1,5 +1,6 @@
 import 'package:snapstudy/features/ai_summary/domain/entities/session_ai_summary.dart';
 import 'package:snapstudy/features/mindmap/data/services/mindmap_color_utils.dart';
+import 'package:snapstudy/features/mindmap/data/services/mindmap_compact_utils.dart';
 import 'package:snapstudy/features/mindmap/domain/entities/mindmap_cluster.dart';
 import 'package:snapstudy/features/mindmap/domain/entities/mindmap_node.dart';
 import 'package:snapstudy/features/mindmap/domain/entities/mindmap_status.dart';
@@ -11,8 +12,10 @@ abstract final class MockMindmapGenerator {
     required StudySession session,
     SessionAiSummary? summary,
   }) {
-    final topic = summary?.detectedTopic ?? session.title;
-    final points = summary?.keyPoints ?? [session.subjectName, session.title];
+    final topic = MindmapCompactUtils.shortenLabel(
+      summary?.detectedTopic ?? session.title,
+    );
+    final points = summary?.keyPoints ?? [session.subjectName];
 
     const rootId = 'mm_root';
     const cConcept = 'cluster_concepts';
@@ -26,61 +29,54 @@ abstract final class MockMindmapGenerator {
       ),
       MindmapCluster(
         id: cApps,
-        label: 'Ứng dụng',
+        label: 'Dạng bài',
         colorValue: MindmapColorUtils.parseColor('#26A69A', 1),
       ),
+    ];
+
+    final branchLabels = <String>[
+      if (points.isNotEmpty) MindmapCompactUtils.shortenLabel(points[0]),
+      if (points.length > 1) MindmapCompactUtils.shortenLabel(points[1]),
+      MindmapCompactUtils.shortenLabel(session.subjectName),
     ];
 
     final branchIds = <String>[];
     final nodes = <MindmapNode>[];
 
-    for (var i = 0; i < 3; i++) {
+    for (var i = 0; i < branchLabels.length; i++) {
       final id = 'mm_b_$i';
       branchIds.add(id);
-      final label = i < points.length
-          ? (points[i].length > 36
-              ? '${points[i].substring(0, 36)}…'
-              : points[i])
-          : 'Nhánh ${i + 1}';
       nodes.add(
         MindmapNode(
           id: id,
-          label: label,
+          label: branchLabels[i],
           parentId: rootId,
           clusterId: i.isEven ? cConcept : cApps,
-          summary: i < points.length ? 'Ý ${i + 1}' : null,
-          childIds: i == 0 ? ['mm_d_0', 'mm_d_1'] : const [],
+          childIds: i == 0 ? const ['mm_d_0'] : const [],
         ),
       );
     }
 
-    nodes.addAll([
-      MindmapNode(
-        id: 'mm_meta',
-        label: session.subjectName,
-        parentId: rootId,
-        clusterId: cConcept,
-      ),
+    nodes.add(
       MindmapNode(
         id: 'mm_d_0',
-        label: 'Chi tiết A',
+        label: 'Ví dụ / công thức',
         parentId: 'mm_b_0',
         clusterId: cApps,
       ),
-      MindmapNode(
-        id: 'mm_d_1',
-        label: 'Chi tiết B',
-        parentId: 'mm_b_0',
-        clusterId: cApps,
-      ),
+    );
+
+    nodes.add(
       MindmapNode(
         id: rootId,
         label: topic,
         clusterId: cConcept,
-        summary: summary?.overview ?? 'Mẫu dev — GEMINI cho mindmap thật',
-        childIds: [...branchIds, 'mm_meta'],
+        summary: summary != null
+            ? MindmapCompactUtils.shortenLabel(summary.overview)
+            : 'Mẫu dev',
+        childIds: branchIds,
       ),
-    ]);
+    );
 
     return SessionMindmap(
       sessionId: session.id,

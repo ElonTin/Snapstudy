@@ -4,6 +4,7 @@ import 'package:snapstudy/features/flashcards/domain/repositories/flashcard_repo
 import 'package:snapstudy/features/sessions/domain/entities/study_session.dart';
 import 'package:snapstudy/features/sessions/domain/repositories/session_repository.dart';
 import 'package:snapstudy/features/spaced_repetition/data/datasources/review_stats_local_datasource.dart';
+import 'package:snapstudy/features/notifications/domain/entities/card_review_reminder.dart';
 import 'package:snapstudy/features/spaced_repetition/domain/entities/review_queue_item.dart';
 import 'package:snapstudy/features/spaced_repetition/domain/entities/spaced_repetition_stats.dart';
 import 'package:snapstudy/features/spaced_repetition/domain/repositories/spaced_repetition_repository.dart';
@@ -57,6 +58,41 @@ class SpacedRepetitionRepositoryImpl implements SpacedRepetitionRepository {
         });
 
         return Success(queue);
+      },
+      onFailure: Error.new,
+    );
+  }
+
+  @override
+  Future<Result<List<CardReviewReminder>>> getUpcomingCardReminders({
+    int withinDays = 7,
+    int limit = 50,
+  }) async {
+    final all = await _sessions.getAllSessions();
+    return all.fold(
+      onSuccess: (sessions) {
+        final now = DateTime.now();
+        final horizon = now.add(Duration(days: withinDays));
+        final reminders = <CardReviewReminder>[];
+
+        for (final session in _sessionsWithDecks(sessions)) {
+          for (final card in session.flashcardDeck!.cards) {
+            final at = card.nextReviewAt;
+            if (at == null || at.isBefore(now) || at.isAfter(horizon)) continue;
+            reminders.add(
+              CardReviewReminder(
+                cardId: card.id,
+                sessionId: session.id,
+                sessionTitle: session.title,
+                cardFront: card.front,
+                reviewAt: at,
+              ),
+            );
+          }
+        }
+
+        reminders.sort((a, b) => a.reviewAt.compareTo(b.reviewAt));
+        return Success(reminders.take(limit).toList());
       },
       onFailure: Error.new,
     );

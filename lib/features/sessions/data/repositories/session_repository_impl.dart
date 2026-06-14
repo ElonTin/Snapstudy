@@ -226,9 +226,11 @@ class SessionRepositoryImpl implements SessionRepository {
       }
 
       final savedPath = await _files.saveCaptureFromPath(imagePath, sessionId);
+      final thumbPath = await _files.generateThumbnail(savedPath, sessionId);
       final item = CaptureQueueItemModel(
         id: 'cap_${DateTime.now().millisecondsSinceEpoch}',
         localPath: savedPath,
+        thumbnailPath: thumbPath,
         capturedAt: DateTime.now(),
         status: CaptureItemStatus.pending,
       );
@@ -430,6 +432,157 @@ class SessionRepositoryImpl implements SessionRepository {
 
       await _save(updated);
       return Success(updated.toEntity());
+    } on AppException catch (e) {
+      return Error(e.toFailure());
+    } catch (e) {
+      return Error(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<StudySession>> updateSessionSubject({
+    required String sessionId,
+    required Subject subject,
+  }) async {
+    try {
+      final session = await _local.readById(sessionId);
+      if (session == null) {
+        return const Error(ValidationFailure('Không tìm thấy buổi học.'));
+      }
+
+      final updated = session.copyWith(
+        subjectId: subject.id,
+        subjectName: subject.name,
+        subjectColorValue: subject.colorValue,
+        tags: _buildAutoTags(subject),
+      );
+
+      await _save(updated);
+      return Success(updated.toEntity());
+    } on AppException catch (e) {
+      return Error(e.toFailure());
+    } catch (e) {
+      return Error(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<StudySession>> setSessionProcessing({
+    required String sessionId,
+    required bool processing,
+  }) async {
+    try {
+      final session = await _local.readById(sessionId);
+      if (session == null) {
+        return const Error(ValidationFailure('Không tìm thấy buổi học.'));
+      }
+
+      if (session.status == SessionStatus.active) {
+        return Success(session.toEntity());
+      }
+
+      final updated = session.copyWith(
+        status: processing ? SessionStatus.processing : _statusAfterProcessing(session),
+      );
+
+      await _save(updated);
+      return Success(updated.toEntity());
+    } on AppException catch (e) {
+      return Error(e.toFailure());
+    } catch (e) {
+      return Error(UnknownFailure(e.toString()));
+    }
+  }
+
+  SessionStatus _statusAfterProcessing(StudySessionModel session) {
+    if (session.aiSummaryReady) return SessionStatus.completed;
+    if (session.ocrResult != null) return SessionStatus.ready;
+    return session.endedAt != null ? SessionStatus.ready : SessionStatus.draft;
+  }
+
+  @override
+  Future<Result<StudySession>> appendCaptures({
+    required String sessionId,
+    required List<String> imagePaths,
+  }) async {
+    try {
+      if (imagePaths.isEmpty) {
+        return const Error(ValidationFailure('Không có ảnh để thêm.'));
+      }
+
+      var session = await _local.readById(sessionId);
+      if (session == null) {
+        return const Error(ValidationFailure('Không tìm thấy buổi học.'));
+      }
+      if (session.status == SessionStatus.active) {
+        return const Error(
+          ValidationFailure('Buổi đang chụp — dùng màn hình buổi học đang diễn ra.'),
+        );
+      }
+
+      final newItems = <CaptureQueueItemModel>[];
+      for (final path in imagePaths) {
+        final savedPath = await _files.saveCaptureFromPath(path, sessionId);
+        final thumbPath = await _files.generateThumbnail(savedPath, sessionId);
+        newItems.add(
+          CaptureQueueItemModel(
+            id: 'cap_${DateTime.now().millisecondsSinceEpoch}_${newItems.length}',
+            localPath: savedPath,
+            thumbnailPath: thumbPath,
+            capturedAt: DateTime.now(),
+            status: CaptureItemStatus.pending,
+          ),
+        );
+      }
+
+      session = session.copyWith(
+        queue: [...session.queue, ...newItems],
+        status: SessionStatus.processing,
+      );
+      await _save(session);
+      return Success(session.toEntity());
+    } on AppException catch (e) {
+      return Error(e.toFailure());
+    } catch (e) {
+      return Error(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<StudySession>> beginStudyEngagement(String sessionId) async {
+    try {
+      final session = await _local.readById(sessionId);
+      if (session == null) {
+        return const Error(ValidationFailure('Không tìm thấy buổi học.'));
+      }
+      if (session.timerRunningSince != null) {
+        return Success(session.toEntity());
+      }
+
+      final updated = session.copyWith(timerRunningSince: DateTime.now());
+      await _save(updated);
+      return Success(updated.toEntity());
+    } on AppException catch (e) {
+      return Error(e.toFailure());
+    } catch (e) {
+      return Error(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Result<StudySession>> endStudyEngagement(String sessionId) async {
+    try {
+      final session = await _local.readById(sessionId);
+      if (session == null) {
+        return const Error(ValidationFailure('Không tìm thấy buổi học.'));
+      }
+      if (session.timerRunningSince == null) {
+        return Success(session.toEntity());
+      }
+
+      final flushed = _flushRunningTimer(session);
+      await _save(flushed);
+      return Success(flushed.toEntity());
     } on AppException catch (e) {
       return Error(e.toFailure());
     } catch (e) {

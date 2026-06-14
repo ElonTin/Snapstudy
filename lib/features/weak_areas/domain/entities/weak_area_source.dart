@@ -1,0 +1,1 @@
+enum WeakAreaSource { flashcard, quiz }

@@ -14,12 +14,12 @@ workflows:
       - name: Create CI .env
         script: |
           cat > .env <<EOF
-          API_BASE_URL=http://10.0.2.2:5000
+          API_BASE_URL=${API_BASE_URL:-http://10.0.2.2:5000}
           ENV=development
-          ENABLE_FIREBASE=false
+          ENABLE_FIREBASE=${ENABLE_FIREBASE:-false}
           APP_NAME=SNAPSTUDY
-          AUTH_DEV_MODE=true
-          GOOGLE_SERVER_CLIENT_ID=
+          AUTH_DEV_MODE=${AUTH_DEV_MODE:-true}
+          GOOGLE_SERVER_CLIENT_ID=${GOOGLE_SERVER_CLIENT_ID:-}
           GEMINI_API_KEY=$GEMINI_API_KEY
           GEMINI_MODEL=gemini-2.5-flash
           GROQ_API_KEY=$GROQ_API_KEY
@@ -35,8 +35,8 @@ workflows:
           MINDMAP_DEV_MODE=false
           MINDMAP_FORCE_MOCK=false
           OCR_ENGINE=auto
-          ENABLE_FCM=false
-          ENABLE_PUSH_REGISTRATION=false
+          ENABLE_FCM=${ENABLE_FCM:-false}
+          ENABLE_PUSH_REGISTRATION=${ENABLE_PUSH_REGISTRATION:-false}
           PUSH_REGISTER_PATH=/api/notifications/devices
           DASHBOARD_CACHE_TTL_SECONDS=45
           SESSION_LIST_CACHE_TTL_SECONDS=30

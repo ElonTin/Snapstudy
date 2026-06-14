@@ -1,4 +1,71 @@
 workflows:
+  ios-unsigned-sideload:
+    name: iOS Unsigned IPA for Sideload
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      vars:
+        BUNDLE_ID: "com.snapstudy.snapstudy"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+
+    scripts:
+      - name: Create CI .env
+        script: |
+          cat > .env <<'EOF'
+          API_BASE_URL=http://10.0.2.2:5000
+          ENV=development
+          ENABLE_FIREBASE=false
+          APP_NAME=SNAPSTUDY
+          AUTH_DEV_MODE=true
+          GOOGLE_SERVER_CLIENT_ID=
+          GEMINI_API_KEY=
+          GEMINI_MODEL=gemini-2.5-flash
+          GROQ_API_KEY=
+          GROQ_MODEL=llama-3.3-70b-versatile
+          ENABLE_PREPROCESSING=false
+          ENABLE_OCR_ENHANCEMENT=false
+          AI_SUMMARY_DEV_MODE=true
+          AI_SUMMARY_FORCE_MOCK=true
+          FLASHCARDS_DEV_MODE=true
+          FLASHCARDS_FORCE_MOCK=true
+          QUIZ_DEV_MODE=true
+          QUIZ_FORCE_MOCK=true
+          MINDMAP_DEV_MODE=true
+          MINDMAP_FORCE_MOCK=true
+          OCR_ENGINE=mlkit
+          ENABLE_FCM=false
+          ENABLE_PUSH_REGISTRATION=false
+          PUSH_REGISTER_PATH=/api/notifications/devices
+          DASHBOARD_CACHE_TTL_SECONDS=45
+          SESSION_LIST_CACHE_TTL_SECONDS=30
+          IMAGE_CACHE_MAX_MB=120
+          IMAGE_CACHE_MAX_COUNT=200
+          EOF
+
+      - name: Get Flutter packages
+        script: flutter pub get
+
+      - name: Install CocoaPods dependencies
+        script: pod install
+        working_directory: ios
+
+      - name: Build iOS app without code signing
+        script: flutter build ios --release --no-codesign --no-tree-shake-icons
+
+      - name: Package unsigned IPA
+        script: |
+          mkdir -p build/ios/unsigned/Payload
+          cp -R build/ios/iphoneos/Runner.app build/ios/unsigned/Payload/Runner.app
+          cd build/ios/unsigned
+          zip -r SnapStudy-unsigned.ipa Payload
+
+    artifacts:
+      - build/ios/unsigned/SnapStudy-unsigned.ipa
+      - build/ios/iphoneos/Runner.app
+      - /tmp/xcodebuild_logs/*.log
+
   ios-release:
     name: iOS Release Build
     max_build_duration: 60

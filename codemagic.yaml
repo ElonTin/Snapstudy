@@ -13,28 +13,28 @@ workflows:
     scripts:
       - name: Create CI .env
         script: |
-          cat > .env <<'EOF'
+          cat > .env <<EOF
           API_BASE_URL=http://10.0.2.2:5000
           ENV=development
           ENABLE_FIREBASE=false
           APP_NAME=SNAPSTUDY
           AUTH_DEV_MODE=true
           GOOGLE_SERVER_CLIENT_ID=
-          GEMINI_API_KEY=
+          GEMINI_API_KEY=$GEMINI_API_KEY
           GEMINI_MODEL=gemini-2.5-flash
-          GROQ_API_KEY=
+          GROQ_API_KEY=$GROQ_API_KEY
           GROQ_MODEL=llama-3.3-70b-versatile
           ENABLE_PREPROCESSING=false
-          ENABLE_OCR_ENHANCEMENT=false
-          AI_SUMMARY_DEV_MODE=true
-          AI_SUMMARY_FORCE_MOCK=true
-          FLASHCARDS_DEV_MODE=true
-          FLASHCARDS_FORCE_MOCK=true
-          QUIZ_DEV_MODE=true
-          QUIZ_FORCE_MOCK=true
-          MINDMAP_DEV_MODE=true
-          MINDMAP_FORCE_MOCK=true
-          OCR_ENGINE=mlkit
+          ENABLE_OCR_ENHANCEMENT=true
+          AI_SUMMARY_DEV_MODE=false
+          AI_SUMMARY_FORCE_MOCK=false
+          FLASHCARDS_DEV_MODE=false
+          FLASHCARDS_FORCE_MOCK=false
+          QUIZ_DEV_MODE=false
+          QUIZ_FORCE_MOCK=false
+          MINDMAP_DEV_MODE=false
+          MINDMAP_FORCE_MOCK=false
+          OCR_ENGINE=auto
           ENABLE_FCM=false
           ENABLE_PUSH_REGISTRATION=false
           PUSH_REGISTER_PATH=/api/notifications/devices

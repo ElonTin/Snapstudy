@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -24,14 +23,15 @@ abstract final class MindmapViewportTransform {
       return Matrix4.identity();
     }
 
-    final scale = math
-        .min(viewport.width / canvas.width, viewport.height / canvas.height)
-        .clamp(minScale, 1.2) *
+    final scale =
+        math
+            .min(viewport.width / canvas.width, viewport.height / canvas.height)
+            .clamp(minScale, 1.2) *
         paddingFactor;
     final dx = (viewport.width - canvas.width * scale) / 2;
     final dy = (viewport.height - canvas.height * scale) / 2;
 
-    final matrix = Matrix4.identity()..scale(scale);
+    final matrix = Matrix4.identity()..scaleByDouble(scale, scale, scale, 1);
     matrix.setTranslationRaw(dx, dy, 0);
     return matrix;
   }
@@ -52,7 +52,8 @@ abstract final class MindmapViewportTransform {
 
     final tx = focal.dx - sceneX * newScale;
     final ty = focal.dy - sceneY * newScale;
-    final matrix = Matrix4.identity()..scale(newScale);
+    final matrix = Matrix4.identity()
+      ..scaleByDouble(newScale, newScale, newScale, 1);
     matrix.setTranslationRaw(tx, ty, 0);
     return matrix;
   }

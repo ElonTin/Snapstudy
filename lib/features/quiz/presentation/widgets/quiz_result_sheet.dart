@@ -10,13 +10,13 @@ import 'package:snapstudy/features/quiz/domain/entities/quiz_score_result.dart';
 
 /// Bottom Sheet hiển thị kết quả sau khi hoàn thành quiz.
 /// Cho phép người dùng xem điểm số, câu sai, và điều hướng đến phân tích AI.
-Future<_QuizResultAction?> showQuizResultSheet({
+Future<QuizResultAction?> showQuizResultSheet({
   required BuildContext context,
   required QuizScoreResult result,
   required List<QuizQuestion> questions,
   required String sessionId,
 }) {
-  return showModalBottomSheet<_QuizResultAction>(
+  return showModalBottomSheet<QuizResultAction>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -28,7 +28,7 @@ Future<_QuizResultAction?> showQuizResultSheet({
   );
 }
 
-enum _QuizResultAction { retryWrong, viewWeakAreas }
+enum QuizResultAction { retryWrong, viewWeakAreas }
 
 // ---------------------------------------------------------------------------
 
@@ -91,10 +91,9 @@ class _QuizResultSheet extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant
-                        .withValues(alpha: 0.3),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -121,27 +120,22 @@ class _QuizResultSheet extends StatelessWidget {
                               color: scoreColor.withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(scoreIcon,
-                                size: 36, color: scoreColor),
+                            child: Icon(scoreIcon, size: 36, color: scoreColor),
                           ),
                           const SizedBox(height: 12),
                           Text(
                             scoreLabel,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
+                            style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Kết quả quiz',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                           ),
                         ],
@@ -169,8 +163,7 @@ class _QuizResultSheet extends StatelessWidget {
                           _Divider(),
                           _StatItem(
                             label: 'Sai',
-                            value:
-                                '${result.totalCount - result.correctCount}',
+                            value: '${result.totalCount - result.correctCount}',
                             color: Colors.red.shade500,
                           ),
                           _Divider(),
@@ -192,7 +185,7 @@ class _QuizResultSheet extends StatelessWidget {
                       variant: AppButtonVariant.primary,
                       expand: true,
                       onPressed: () {
-                        Navigator.pop(context, _QuizResultAction.viewWeakAreas);
+                        Navigator.pop(context, QuizResultAction.viewWeakAreas);
                         context.push(RoutePaths.weakAreasPath(sessionId));
                       },
                     ),
@@ -204,8 +197,8 @@ class _QuizResultSheet extends StatelessWidget {
                         icon: Icons.replay_rounded,
                         variant: AppButtonVariant.outline,
                         expand: true,
-                        onPressed: () => Navigator.pop(
-                            context, _QuizResultAction.retryWrong),
+                        onPressed: () =>
+                            Navigator.pop(context, QuizResultAction.retryWrong),
                       ),
                     ],
 
@@ -228,10 +221,7 @@ class _QuizResultSheet extends StatelessWidget {
                       ...wrongQuestions.asMap().entries.map((entry) {
                         final i = entry.key;
                         final q = entry.value;
-                        return _WrongAnswerCard(
-                          index: i + 1,
-                          question: q,
-                        );
+                        return _WrongAnswerCard(index: i + 1, question: q);
                       }),
                     ] else ...[
                       const SizedBox(height: 16),
@@ -240,14 +230,14 @@ class _QuizResultSheet extends StatelessWidget {
                         color: Colors.green.withValues(alpha: 0.08),
                         child: Row(
                           children: [
-                            Icon(Icons.check_circle_outline,
-                                color: Colors.green.shade600),
+                            Icon(
+                              Icons.check_circle_outline,
+                              color: Colors.green.shade600,
+                            ),
                             const SizedBox(width: 10),
                             Text(
                               'Không có câu sai — hoàn hảo!',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: Colors.green.shade700,
                                     fontWeight: FontWeight.w500,
@@ -289,16 +279,16 @@ class _StatItem extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -358,35 +348,35 @@ class _WrongAnswerCard extends StatelessWidget {
                   child: Text(
                     question.prompt,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 10),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.green.withValues(alpha: 0.08),
-                borderRadius:
-                    BorderRadius.circular(AppConstants.smallRadius),
-                border: Border.all(
-                    color: Colors.green.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(AppConstants.smallRadius),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle_outline,
-                      size: 16, color: Colors.green.shade600),
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 16,
+                    color: Colors.green.shade600,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Đáp án: ${question.choices[question.correctIndex]}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.green.shade700,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        color: Colors.green.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
@@ -407,11 +397,9 @@ class _WrongAnswerCard extends StatelessWidget {
                     child: Text(
                       question.explanation,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                            height: 1.4,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
                     ),
                   ),
                 ],

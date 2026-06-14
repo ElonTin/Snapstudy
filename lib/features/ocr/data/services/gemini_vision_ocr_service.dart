@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:snapstudy/core/utils/result.dart';
 import 'package:snapstudy/features/ai_summary/data/services/gemini_api_client.dart';
 import 'package:snapstudy/features/ocr/data/services/ocr_image_prepare.dart';
 import 'package:snapstudy/features/ocr/data/services/text_recognition_service.dart';

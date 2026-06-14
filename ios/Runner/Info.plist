@@ -85,8 +85,5 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>SNAPSTUDY dùng Face ID để bảo mật thông tin đăng nhập của bạn.</string>
 
-	<!-- Firebase Messaging: APNS/FCM support -->
-	<key>FirebaseAppDelegateProxyEnabled</key>
-	<false/>
 </dict>
 </plist>

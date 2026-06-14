@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:snapstudy/core/env/env_config.dart';
-import 'package:snapstudy/core/utils/result.dart';
 import 'package:snapstudy/features/ai/data/services/llm_json_client.dart';
 import 'package:snapstudy/features/ai_summary/data/services/gemini_token_limits.dart';
 import 'package:snapstudy/features/ocr/domain/services/latex_equation_extractor.dart';
@@ -33,7 +32,8 @@ class OcrTextEnhancer {
       return _localOnly(locallyFormatted);
     }
 
-    final prompt = '''
+    final prompt =
+        '''
 Bạn là chuyên gia biên tập OCR học thuật (toán, lý, hóa, văn, tiếng Anh).
 Nhiệm vụ: làm sạch và cấu trúc lại văn bản OCR, KHÔNG thêm nội dung mới.
 

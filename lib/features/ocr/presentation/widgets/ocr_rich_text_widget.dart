@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:snapstudy/core/widgets/latex_text_widget.dart';
 
-class _OcrSegment {
-  const _OcrSegment({required this.text, this.isLatex = false, this.isBlock = false});
+class OcrSegment {
+  const OcrSegment({
+    required this.text,
+    this.isLatex = false,
+    this.isBlock = false,
+  });
 
   final String text;
   final bool isLatex;
@@ -11,11 +15,7 @@ class _OcrSegment {
 
 /// Hiển thị văn bản OCR hỗn hợp plain text + LaTeX ($...$ / $$...$$).
 class OcrRichTextWidget extends StatelessWidget {
-  const OcrRichTextWidget({
-    super.key,
-    required this.text,
-    this.style,
-  });
+  const OcrRichTextWidget({super.key, required this.text, this.style});
 
   final String text;
   final TextStyle? style;
@@ -23,10 +23,10 @@ class OcrRichTextWidget extends StatelessWidget {
   static final _blockPattern = RegExp(r'\$\$([\s\S]+?)\$\$', multiLine: true);
   static final _inlinePattern = RegExp(r'\$([^$\n]+?)\$');
 
-  static List<_OcrSegment> parse(String input) {
+  static List<OcrSegment> parse(String input) {
     if (input.trim().isEmpty) return const [];
 
-    final segments = <_OcrSegment>[];
+    final segments = <OcrSegment>[];
     var remaining = input;
 
     while (remaining.isNotEmpty) {
@@ -43,16 +43,16 @@ class OcrRichTextWidget extends StatelessWidget {
       }
 
       if (next == null) {
-        segments.add(_OcrSegment(text: remaining));
+        segments.add(OcrSegment(text: remaining));
         break;
       }
 
       if (next.start > 0) {
-        segments.add(_OcrSegment(text: remaining.substring(0, next.start)));
+        segments.add(OcrSegment(text: remaining.substring(0, next.start)));
       }
 
       segments.add(
-        _OcrSegment(
+        OcrSegment(
           text: next.group(1)!.trim(),
           isLatex: true,
           isBlock: isBlock,
@@ -92,15 +92,9 @@ class OcrRichTextWidget extends StatelessWidget {
           ),
           child: seg.isBlock
               ? Center(
-                  child: LatexTextWidget(
-                    latex: seg.text,
-                    style: baseStyle,
-                  ),
+                  child: LatexTextWidget(latex: seg.text, style: baseStyle),
                 )
-              : LatexTextWidget(
-                  latex: seg.text,
-                  style: baseStyle,
-                ),
+              : LatexTextWidget(latex: seg.text, style: baseStyle),
         );
       }).toList(),
     );

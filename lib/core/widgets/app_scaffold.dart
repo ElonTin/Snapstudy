@@ -37,8 +37,9 @@ class AppScaffold extends StatelessWidget {
 
     content = Center(
       child: ConstrainedBox(
-        constraints:
-            const BoxConstraints(maxWidth: AppConstants.maxContentWidth),
+        constraints: const BoxConstraints(
+          maxWidth: AppConstants.maxContentWidth,
+        ),
         child: content,
       ),
     );
@@ -87,14 +88,14 @@ class AppSectionHeader extends StatelessWidget {
                 Text(
                   subtitle!,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ],
           ),
         ),
-        if (trailing != null) trailing!,
+        ?trailing,
       ],
     );
   }

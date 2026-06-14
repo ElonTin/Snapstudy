@@ -62,10 +62,9 @@ class _FlashcardStudyPageState extends ConsumerState<FlashcardStudyPage> {
 
   List<Flashcard> _studyCards(List<Flashcard> all) {
     if (widget.weakOnly) {
-      final weakIds = WeakAreasAnalyzer.analyzeCards(all)
-          .map((w) => w.referenceId)
-          .whereType<String>()
-          .toSet();
+      final weakIds = WeakAreasAnalyzer.analyzeCards(
+        all,
+      ).map((w) => w.referenceId).whereType<String>().toSet();
       return all.where((c) => weakIds.contains(c.id)).toList();
     }
     return all.where((c) => c.isDue).toList();
@@ -82,7 +81,9 @@ class _FlashcardStudyPageState extends ConsumerState<FlashcardStudyPage> {
     setState(() => _isSubmitting = true);
     final card = study[_index];
 
-    await ref.read(flashcardRepositoryProvider).recordReview(
+    await ref
+        .read(flashcardRepositoryProvider)
+        .recordReview(
           sessionId: widget.sessionId,
           cardId: card.id,
           rating: rating,
@@ -155,254 +156,266 @@ class _FlashcardStudyPageState extends ConsumerState<FlashcardStudyPage> {
       body: Stack(
         children: [
           deckAsync.when(
-        loading: () => const AppLoading(fullScreen: true, useSkeleton: true),
-        error: (e, _) => Center(child: Text('$e')),
-        data: (deck) {
-          if (deck == null || deck.cards.isEmpty) {
-            return const AppEmptyState(
-              icon: Icons.style_outlined,
-              title: 'Chưa có bộ flashcard',
-              subtitle: 'Tạo flashcard từ buổi học để bắt đầu ôn tập.',
-            );
-          }
+            loading: () =>
+                const AppLoading(fullScreen: true, useSkeleton: true),
+            error: (e, _) => Center(child: Text('$e')),
+            data: (deck) {
+              if (deck == null || deck.cards.isEmpty) {
+                return const AppEmptyState(
+                  icon: Icons.style_outlined,
+                  title: 'Chưa có bộ flashcard',
+                  subtitle: 'Tạo flashcard từ buổi học để bắt đầu ôn tập.',
+                );
+              }
 
-          final study = _studyCards(deck.cards);
-          if (study.isEmpty) {
-            return AppEmptyState(
-              icon: Icons.celebration_outlined,
-              title: widget.weakOnly
-                  ? 'Không còn thẻ yếu — tuyệt vời!'
-                  : 'Đã ôn hết thẻ đến hạn!',
-              subtitle: 'Quay lại khi có thẻ mới cần ôn.',
-              action: AppButton(
-                label: 'Quay lại',
-                variant: AppButtonVariant.primary,
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            );
-          }
-
-          final card = study[_index.clamp(0, study.length - 1)];
-          final progress = (_index + 1) / study.length;
-
-          return Padding(
-            padding: const EdgeInsets.all(AppConstants.defaultPadding),
-            child: Column(
-              children: [
-                AppCard(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Thẻ ${_index + 1} / ${study.length}',
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${(progress * 100).round()}%',
-                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.secondary,
-                                ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 6,
-                          backgroundColor: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
-                        ),
-                      ),
-                    ],
+              final study = _studyCards(deck.cards);
+              if (study.isEmpty) {
+                return AppEmptyState(
+                  icon: Icons.celebration_outlined,
+                  title: widget.weakOnly
+                      ? 'Không còn thẻ yếu — tuyệt vời!'
+                      : 'Đã ôn hết thẻ đến hạn!',
+                  subtitle: 'Quay lại khi có thẻ mới cần ôn.',
+                  action: AppButton(
+                    label: 'Quay lại',
+                    variant: AppButtonVariant.primary,
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _showBack = !_showBack),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 280),
-                      curve: Curves.easeInOut,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: _showBack
-                              ? [
-                                  AppColors.aiGradientEnd,
-                                  AppColors.aiGradientStart,
-                                ]
-                              : [
-                                  AppColors.primary,
-                                  AppColors.aiGradientStart,
-                                ],
-                        ),
-                        borderRadius: BorderRadius.circular(
-                          AppConstants.defaultRadius,
-                        ),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.25),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
+                );
+              }
+
+              final card = study[_index.clamp(0, study.length - 1)];
+              final progress = (_index + 1) / study.length;
+
+              return Padding(
+                padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                child: Column(
+                  children: [
+                    AppCard(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Thẻ ${_index + 1} / ${study.length}',
+                                style: Theme.of(context).textTheme.labelLarge
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              const Spacer(),
+                              Text(
+                                '${(progress * 100).round()}%',
+                                style: Theme.of(context).textTheme.labelMedium
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.secondary,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: LinearProgressIndicator(
+                              value: progress,
+                              minHeight: 6,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                            ),
                           ),
                         ],
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          children: [
-                            Align(
-                              alignment: Alignment.topRight,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _showBack = !_showBack),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 280),
+                          curve: Curves.easeInOut,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: _showBack
+                                  ? [
+                                      AppColors.aiGradientEnd,
+                                      AppColors.aiGradientStart,
+                                    ]
+                                  : [
+                                      AppColors.primary,
+                                      AppColors.aiGradientStart,
+                                    ],
+                            ),
+                            borderRadius: BorderRadius.circular(
+                              AppConstants.defaultRadius,
+                            ),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.25,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.18),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  _showBack ? 'MẶT SAU' : 'MẶT TRƯỚC',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelSmall
-                                      ?.copyWith(
-                                        color: Colors.white70,
-                                        letterSpacing: 1.2,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                ),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
                               ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              _showBack ? card.back : card.front,
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineSmall
-                                  ?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    height: 1.35,
+                            ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              children: [
+                                Align(
+                                  alignment: Alignment.topRight,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.18,
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      _showBack ? 'MẶT SAU' : 'MẶT TRƯỚC',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            color: Colors.white70,
+                                            letterSpacing: 1.2,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
                                   ),
-                            ),
-                            if (card.hint != null && !_showBack) ...[
-                              const SizedBox(height: 16),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 8,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  'Gợi ý: ${card.hint}',
+                                const Spacer(),
+                                Text(
+                                  _showBack ? card.back : card.front,
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context)
                                       .textTheme
-                                      .bodySmall
-                                      ?.copyWith(color: Colors.white70),
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.35,
+                                      ),
                                 ),
-                              ),
-                            ],
-                            const Spacer(),
-                          ],
+                                if (card.hint != null && !_showBack) ...[
+                                  const SizedBox(height: 16),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.12,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      'Gợi ý: ${card.hint}',
+                                      textAlign: TextAlign.center,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(color: Colors.white70),
+                                    ),
+                                  ),
+                                ],
+                                const Spacer(),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  _showBack ? 'Chạm để xem mặt trước' : 'Chạm để lật thẻ',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    const SizedBox(height: 12),
+                    Text(
+                      _showBack ? 'Chạm để xem mặt trước' : 'Chạm để lật thẻ',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (_showBack)
+                      Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AppButton(
+                                  label: 'Chưa thuộc',
+                                  variant: AppButtonVariant.outline,
+                                  expand: true,
+                                  isLoading: _isSubmitting,
+                                  onPressed: _isSubmitting
+                                      ? null
+                                      : () => _rate(ReviewRating.again),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: AppButton(
+                                  label: 'Khó',
+                                  variant: AppButtonVariant.outline,
+                                  expand: true,
+                                  isLoading: _isSubmitting,
+                                  onPressed: _isSubmitting
+                                      ? null
+                                      : () => _rate(ReviewRating.hard),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AppButton(
+                                  label: 'Thuộc',
+                                  variant: AppButtonVariant.primary,
+                                  expand: true,
+                                  isLoading: _isSubmitting,
+                                  onPressed: _isSubmitting
+                                      ? null
+                                      : () => _rate(ReviewRating.good),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: AppButton(
+                                  label: 'Dễ',
+                                  variant: AppButtonVariant.secondary,
+                                  expand: true,
+                                  isLoading: _isSubmitting,
+                                  onPressed: _isSubmitting
+                                      ? null
+                                      : () => _rate(ReviewRating.easy),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                if (_showBack)
-                  Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: AppButton(
-                              label: 'Chưa thuộc',
-                              variant: AppButtonVariant.outline,
-                              expand: true,
-                              isLoading: _isSubmitting,
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () => _rate(ReviewRating.again),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: AppButton(
-                              label: 'Khó',
-                              variant: AppButtonVariant.outline,
-                              expand: true,
-                              isLoading: _isSubmitting,
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () => _rate(ReviewRating.hard),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: AppButton(
-                              label: 'Thuộc',
-                              variant: AppButtonVariant.primary,
-                              expand: true,
-                              isLoading: _isSubmitting,
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () => _rate(ReviewRating.good),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: AppButton(
-                              label: 'Dễ',
-                              variant: AppButtonVariant.secondary,
-                              expand: true,
-                              isLoading: _isSubmitting,
-                              onPressed: _isSubmitting
-                                  ? null
-                                  : () => _rate(ReviewRating.easy),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
           const Positioned(
             top: 0,
             right: 12,
@@ -439,7 +452,6 @@ class _FlashcardSummarySheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mastered = goodCount + easyCount;
     final theme = Theme.of(context);
 
     final Color headerColor;
@@ -482,7 +494,9 @@ class _FlashcardSummarySheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -522,14 +536,26 @@ class _FlashcardSummarySheet extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
             child: Row(
               children: [
-                _StatCell(label: 'Chưa thuộc', value: '$againCount',
-                    color: Colors.red.shade500),
-                _StatCell(label: 'Khó', value: '$hardCount',
-                    color: AppColors.warning),
-                _StatCell(label: 'Thuộc', value: '$goodCount',
-                    color: Colors.blue.shade500),
-                _StatCell(label: 'Dễ', value: '$easyCount',
-                    color: Colors.green.shade600),
+                _StatCell(
+                  label: 'Chưa thuộc',
+                  value: '$againCount',
+                  color: Colors.red.shade500,
+                ),
+                _StatCell(
+                  label: 'Khó',
+                  value: '$hardCount',
+                  color: AppColors.warning,
+                ),
+                _StatCell(
+                  label: 'Thuộc',
+                  value: '$goodCount',
+                  color: Colors.blue.shade500,
+                ),
+                _StatCell(
+                  label: 'Dễ',
+                  value: '$easyCount',
+                  color: Colors.green.shade600,
+                ),
               ],
             ),
           ),
@@ -606,16 +632,16 @@ class _StatCell extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
         ],

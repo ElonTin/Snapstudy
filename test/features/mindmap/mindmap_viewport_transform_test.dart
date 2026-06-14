@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:snapstudy/features/mindmap/presentation/utils/mindmap_viewport_transform.dart';
@@ -19,7 +17,7 @@ void main() {
 
   test('zoomAt keeps focal point stable', () {
     const focal = Offset(200, 150);
-    final initial = Matrix4.identity()..scale(0.8);
+    final initial = Matrix4.identity()..scaleByDouble(0.8, 0.8, 0.8, 1);
     initial.setTranslationRaw(10, 20, 0);
 
     final zoomed = MindmapViewportTransform.zoomAt(

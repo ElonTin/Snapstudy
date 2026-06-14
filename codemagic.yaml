@@ -53,6 +53,7 @@ workflows:
 
       - name: Build iOS archive (no signing)
         script: |
+          set -eo pipefail
           xcodebuild \
             -workspace ios/Runner.xcworkspace \
             -scheme Runner \
@@ -64,18 +65,25 @@ workflows:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             DEVELOPMENT_TEAM="" \
-            | xcpretty
+            FLUTTER_BUILD_DIR=build \
+            SKIP_BUNDLING=YES 2>&1 | tee /tmp/xcodebuild.log
+          echo "=== Archive contents ==="
+          ls -la "$CM_BUILD_DIR/Runner.xcarchive/Products/Applications/" || echo "WARNING: Archive path not found!"
 
       - name: Package unsigned IPA from archive
         script: |
+          set -eo pipefail
+          APP_PATH=$(find "$CM_BUILD_DIR/Runner.xcarchive" -name "*.app" -maxdepth 4 | head -1)
+          echo "Found app at: $APP_PATH"
           mkdir -p "$CM_BUILD_DIR/unsigned/Payload"
-          cp -R "$CM_BUILD_DIR/Runner.xcarchive/Products/Applications/Runner.app" \
-               "$CM_BUILD_DIR/unsigned/Payload/Runner.app"
+          cp -R "$APP_PATH" "$CM_BUILD_DIR/unsigned/Payload/Runner.app"
           cd "$CM_BUILD_DIR/unsigned"
-          zip -r SnapStudy-unsigned.ipa Payload
+          zip -qr SnapStudy-unsigned.ipa Payload
+          echo "IPA size: $(du -sh SnapStudy-unsigned.ipa)"
 
     artifacts:
       - $CM_BUILD_DIR/unsigned/SnapStudy-unsigned.ipa
+      - /tmp/xcodebuild.log
       - /tmp/xcodebuild_logs/*.log
 
   ios-release:

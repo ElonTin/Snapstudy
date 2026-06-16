@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/routing/route_paths.dart';
 import 'package:snapstudy/core/utils/extensions.dart';
+import 'package:snapstudy/core/utils/icon_helper.dart';
 import 'package:snapstudy/core/widgets/app_button.dart';
 import 'package:snapstudy/core/widgets/app_empty_state.dart';
 import 'package:snapstudy/core/widgets/app_error_view.dart';
@@ -375,7 +376,7 @@ class _SubjectListTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppConstants.smallRadius),
               ),
               child: Icon(
-                IconData(subject.iconCodePoint, fontFamily: 'MaterialIcons'),
+                iconFromCodePoint(subject.iconCodePoint),
                 color: color,
               ),
             ),

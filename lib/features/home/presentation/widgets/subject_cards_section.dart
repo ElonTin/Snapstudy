@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:snapstudy/core/routing/route_paths.dart';
+import 'package:snapstudy/core/utils/icon_helper.dart';
 import 'package:snapstudy/core/widgets/app_scaffold.dart';
 import 'package:snapstudy/features/home/domain/entities/subject_summary.dart';
 import 'package:snapstudy/features/home/presentation/widgets/dashboard_section_header.dart';
@@ -67,7 +68,7 @@ class _SubjectCard extends StatelessWidget {
                 ),
               ),
               child: Icon(
-                IconData(subject.iconCodePoint, fontFamily: 'MaterialIcons'),
+                iconFromCodePoint(subject.iconCodePoint),
                 color: color,
                 size: 20,
               ),

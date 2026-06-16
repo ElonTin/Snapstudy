@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/routing/route_paths.dart';
 import 'package:snapstudy/core/utils/extensions.dart';
+import 'package:snapstudy/core/utils/icon_helper.dart';
 import 'package:snapstudy/core/widgets/app_button.dart';
 import 'package:snapstudy/core/widgets/app_empty_state.dart';
 import 'package:snapstudy/core/widgets/app_loading.dart';
@@ -128,8 +129,7 @@ class StartSessionPage extends HookConsumerWidget {
                           selected: selected,
                           label: Text(s.name),
                           avatar: Icon(
-                            IconData(s.iconCodePoint,
-                                fontFamily: 'MaterialIcons'),
+                            iconFromCodePoint(s.iconCodePoint),
                             size: 18,
                             color: color,
                           ),

@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:snapstudy/core/constants/app_constants.dart';
 import 'package:snapstudy/core/errors/failures.dart';
 import 'package:snapstudy/core/utils/extensions.dart';
+import 'package:snapstudy/core/utils/icon_helper.dart';
 import 'package:snapstudy/core/widgets/app_button.dart';
 import 'package:snapstudy/core/widgets/app_loading.dart';
 import 'package:snapstudy/core/widgets/app_scaffold.dart';
@@ -43,10 +44,7 @@ class SubjectFormPage extends HookConsumerWidget {
             nameController.text = s.name;
             descController.text = s.description ?? '';
             selectedColor.value = Color(s.colorValue);
-            selectedIcon.value = IconData(
-              s.iconCodePoint,
-              fontFamily: 'MaterialIcons',
-            );
+            selectedIcon.value = iconFromCodePoint(s.iconCodePoint);
             selectedFolderId.value = s.folderId;
             isLoading.value = false;
             break;

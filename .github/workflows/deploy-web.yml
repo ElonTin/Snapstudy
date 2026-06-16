@@ -27,7 +27,7 @@ jobs:
         with:
           flutter-version: "3.41.6"
           channel: "stable"
-          cache: true
+          cache: false
 
       - name: Create .env file
         run: |

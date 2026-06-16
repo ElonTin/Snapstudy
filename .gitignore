@@ -107,7 +107,6 @@ android/app/build/
 **/macos/Pods/
 
 # --- Web (if enabled later) ---
-lib/generated_plugin_registrant.dart
 
 # --- .NET / C# (SnapStudy.Api) ---
 **/bin/

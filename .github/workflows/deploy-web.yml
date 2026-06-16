@@ -32,7 +32,30 @@ jobs:
       - name: Create .env file
         run: |
           cat > .env << 'EOF'
+          ENV=production
+          ENABLE_FIREBASE=true
+          APP_NAME=SNAPSTUDY
+          AUTH_DEV_MODE=false
+          ENABLE_PREPROCESSING=true
+          OCR_DEV_MODE=false
+          OCR_FORCE_MOCK=false
+          OCR_ENGINE=auto
+          ENABLE_OCR_ENHANCEMENT=true
+          GEMINI_MODEL=gemini-2.5-flash
+          GROQ_MODEL=llama-3.3-70b-versatile
+          AI_SUMMARY_DEV_MODE=false
+          AI_SUMMARY_FORCE_MOCK=false
+          FLASHCARDS_DEV_MODE=false
+          FLASHCARDS_FORCE_MOCK=false
+          QUIZ_DEV_MODE=false
+          QUIZ_FORCE_MOCK=false
+          MINDMAP_DEV_MODE=false
+          MINDMAP_FORCE_MOCK=false
+          ENABLE_FCM=false
+          ENABLE_PUSH_REGISTRATION=false
+          GOOGLE_SERVER_CLIENT_ID=${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
           GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
           EMAILJS_SERVICE_ID=${{ secrets.EMAILJS_SERVICE_ID }}
           EMAILJS_TEMPLATE_ID=${{ secrets.EMAILJS_TEMPLATE_ID }}
           EMAILJS_PUBLIC_KEY=${{ secrets.EMAILJS_PUBLIC_KEY }}

@@ -22,6 +22,7 @@ class GoogleAuthDataSource {
     final serverClientId = EnvConfig.googleServerClientId;
     return GoogleSignIn(
       scopes: const ['email', 'profile'],
+      clientId: serverClientId,
       serverClientId: serverClientId,
     );
   }

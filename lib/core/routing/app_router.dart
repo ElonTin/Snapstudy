@@ -26,6 +26,7 @@ import 'package:snapstudy/features/sessions/presentation/pages/start_session_pag
 import 'package:snapstudy/features/subjects/presentation/pages/subject_form_page.dart';
 import 'package:snapstudy/features/subjects/presentation/pages/subjects_list_page.dart';
 import 'package:snapstudy/features/weak_areas/presentation/pages/weak_areas_page.dart';
+import 'package:snapstudy/features/feedback/presentation/pages/feedback_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -115,6 +116,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'history',
             name: RouteNames.notificationHistory,
             builder: (context, state) => const NotificationHistoryPage(),
+          ),
+          GoRoute(
+            path: 'feedback',
+            name: RouteNames.feedback,
+            builder: (context, state) => const FeedbackPage(),
           ),
         ],
       ),

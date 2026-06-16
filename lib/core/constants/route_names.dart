@@ -21,4 +21,5 @@ abstract final class RouteNames {
   static const String mindmapView = 'mindmapView';
   static const String reviewQueue = 'reviewQueue';
   static const String weakAreas = 'weakAreas';
+  static const String feedback = 'feedback';
 }

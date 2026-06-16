@@ -140,4 +140,19 @@ class EnvConfig {
 
   static String get pushRegisterPath =>
       dotenv.env['PUSH_REGISTER_PATH'] ?? '/api/notifications/devices';
+
+  // ── EmailJS (Feedback) ──────────────────────────────────────────────────
+  static String get emailJsServiceId =>
+      dotenv.env['EMAILJS_SERVICE_ID'] ?? '';
+
+  static String get emailJsTemplateId =>
+      dotenv.env['EMAILJS_TEMPLATE_ID'] ?? '';
+
+  static String get emailJsPublicKey =>
+      dotenv.env['EMAILJS_PUBLIC_KEY'] ?? '';
+
+  static bool get isEmailJsConfigured =>
+      emailJsServiceId.isNotEmpty &&
+      emailJsTemplateId.isNotEmpty &&
+      emailJsPublicKey.isNotEmpty;
 }

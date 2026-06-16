@@ -46,4 +46,6 @@ abstract final class RoutePaths {
 
   static String weakAreasPath(String sessionId) =>
       '/sessions/$sessionId/weak-areas';
+
+  static const String feedback = '/settings/feedback';
 }

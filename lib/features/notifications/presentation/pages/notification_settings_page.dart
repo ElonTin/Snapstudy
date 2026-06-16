@@ -10,6 +10,7 @@ import 'package:snapstudy/features/notifications/domain/entities/notification_pr
 import 'package:snapstudy/core/routing/route_paths.dart';
 import 'package:go_router/go_router.dart';
 import 'package:snapstudy/features/notifications/presentation/providers/notification_providers.dart';
+import 'package:snapstudy/core/constants/route_names.dart';
 
 class NotificationSettingsPage extends ConsumerStatefulWidget {
   const NotificationSettingsPage({super.key});
@@ -308,6 +309,41 @@ class _NotificationSettingsPageState
                         }
                       },
               ),
+              const SizedBox(height: 28),
+
+              // ── Hỗ trợ & phản hồi ────────────────────────────────────
+              const AppSectionHeader(
+                title: 'Hỗ trợ & phản hồi',
+                subtitle: 'Gửi ý kiến đến nhà phát triển',
+              ),
+              const SizedBox(height: 8),
+              AppCard(
+                onTap: () => context.pushNamed(RouteNames.feedback),
+                padding: EdgeInsets.zero,
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .tertiaryContainer
+                          .withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.feedback_outlined,
+                      color: Theme.of(context).colorScheme.tertiary,
+                      size: 22,
+                    ),
+                  ),
+                  title: const Text('Gửi phản hồi'),
+                  subtitle: const Text(
+                    'Báo lỗi, góp ý hoặc khen ngợi ứng dụng',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                ),
+              ),
+              const SizedBox(height: 24),
             ],
           );
         },

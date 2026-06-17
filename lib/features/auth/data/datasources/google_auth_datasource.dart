@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:snapstudy/core/env/env_config.dart';
@@ -48,7 +49,27 @@ class GoogleAuthDataSource {
       final googleAuth = await account.authentication;
       var idToken = googleAuth.idToken;
 
+      if (kIsWeb && (idToken == null || idToken.isEmpty)) {
+        AppLogger.info('Google ID token is null on Web. Retrying with signInSilently...');
+        try {
+          final silentAccount = await _googleSignIn.signInSilently(reAuthenticate: true);
+          if (silentAccount != null) {
+            final silentAuth = await silentAccount.authentication;
+            idToken = silentAuth.idToken;
+          }
+        } catch (e) {
+          AppLogger.error('Google silent sign-in failed on Web', e);
+        }
+      }
+
       if (idToken == null || idToken.isEmpty) {
+        if (kIsWeb) {
+          throw const NetworkException(
+            'Không lấy được Google ID token trên Web. Vui lòng:\n'
+            '• Đảm bảo đã thêm quyền "openid" vào cấu hình OAuth Consent Screen trong Google Cloud Console.\n'
+            '• Xóa cache trình duyệt hoặc thử lại trên tab ẩn danh.',
+          );
+        }
         throw const NetworkException(
           'Không lấy được Google ID token. Trên Android cần:\n'
           '• GOOGLE_SERVER_CLIENT_ID = OAuth client loại Web\n'

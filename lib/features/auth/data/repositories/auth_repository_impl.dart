@@ -135,17 +135,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   Future<AuthSession> _resolveSession(GoogleSignInResult google) async {
-    try {
-      final dto = await _remote.exchangeGoogleToken(google.idToken);
-      return dto.toSession();
-    } on AppException catch (e) {
-      if (!EnvConfig.authDevMode) rethrow;
-      AppLogger.warning(
-        'Backend JWT exchange failed — using dev session',
-        e,
-      );
-      return _buildDevSession(google);
-    }
+    // No backend — build session directly from Google sign-in result.
+    return _buildDevSession(google);
   }
 
   AuthSession _buildDevSession(GoogleSignInResult google) {
